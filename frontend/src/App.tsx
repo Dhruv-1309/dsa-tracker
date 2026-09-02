@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import ProblemList from './pages/ProblemList';
 import ProblemForm from './pages/ProblemForm';
 import ProblemAttempts from './pages/ProblemAttempts';
+import RevisitQueue from './pages/RevisitQueue';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,6 +29,7 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<ProblemList />} />
+              <Route path="/queue" element={<RevisitQueue />} />
               <Route path="/problems/new" element={<ProblemForm />} />
               <Route path="/problems/:id/edit" element={<ProblemForm />} />
               <Route path="/problems/:id/attempts" element={<ProblemAttempts />} />
