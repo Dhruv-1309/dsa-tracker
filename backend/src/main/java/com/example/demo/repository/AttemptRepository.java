@@ -9,5 +9,5 @@ import java.util.UUID;
 
 @Repository
 public interface AttemptRepository extends JpaRepository<Attempt, UUID> {
-    List<Attempt> findByProblemId(UUID problemId);
+    List<Attempt> findByProblemIdOrderByCreatedAtDesc(UUID problemId);
 }

@@ -157,6 +157,9 @@ export default function ProblemList() {
                                             </span>
                                         </td>
                                         <td className="p-4 text-right space-x-3">
+                                            <Link to={`/problems/${p.id}/attempts`} className="text-green-600 hover:text-green-900 text-sm font-medium mr-2">
+                                                Attempts
+                                            </Link>
                                             <Link to={`/problems/${p.id}/edit`} className="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
                                                 Edit
                                             </Link>

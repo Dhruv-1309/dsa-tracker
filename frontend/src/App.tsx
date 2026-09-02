@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ProblemList from './pages/ProblemList';
 import ProblemForm from './pages/ProblemForm';
+import ProblemAttempts from './pages/ProblemAttempts';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,6 +30,7 @@ function App() {
               <Route path="/dashboard" element={<ProblemList />} />
               <Route path="/problems/new" element={<ProblemForm />} />
               <Route path="/problems/:id/edit" element={<ProblemForm />} />
+              <Route path="/problems/:id/attempts" element={<ProblemAttempts />} />
             </Route>
           </Routes>
         </BrowserRouter>
