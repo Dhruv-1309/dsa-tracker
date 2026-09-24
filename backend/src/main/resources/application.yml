@@ -11,11 +11,15 @@ spring:
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: ${DB_POOL_MAX:10}
+      minimum-idle: 2
+      idle-timeout: 300000
+      max-lifetime: 1800000
       connection-timeout: ${DB_POOL_TIMEOUT:30000}
       data-source-properties:
         prepareThreshold: 0
         preferQueryMode: simple
   jpa:
+    open-in-view: false
     show-sql: false
     hibernate:
       ddl-auto: update
