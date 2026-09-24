@@ -23,6 +23,7 @@ import TerminalIcon from '@mui/icons-material/Terminal';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import AutoGraphIcon from '@mui/icons-material/AutoGraph';
+import { TextEffect } from '../components/motion/TextEffect';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -162,8 +163,7 @@ export default function Login() {
                 fontSize: { xs: '1.75rem', sm: '2.25rem' },
               }}
             >
-              Master algorithms. <br />
-              <span style={{ color: '#A59DFF' }}>Never forget a pattern.</span>
+              <TextEffect per="word">Master algorithms. Never forget a pattern.</TextEffect>
             </Typography>
 
             <Typography

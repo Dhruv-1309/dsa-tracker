@@ -22,6 +22,7 @@ import TerminalIcon from '@mui/icons-material/Terminal';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import InsightsIcon from '@mui/icons-material/Insights';
+import { TextEffect } from '../components/motion/TextEffect';
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -165,8 +166,7 @@ export default function Register() {
                 fontSize: { xs: '1.75rem', sm: '2.25rem' },
               }}
             >
-              Transform practice into <br />
-              <span style={{ color: '#84E1BC' }}>permanent recall.</span>
+              <TextEffect per="word">Transform practice into permanent recall.</TextEffect>
             </Typography>
 
             <Typography
