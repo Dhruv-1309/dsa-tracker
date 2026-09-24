@@ -7,6 +7,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -26,31 +28,41 @@ public class Problem {
     private User user;
 
     @Column(nullable = false)
-    private String name;
+    private String title;
 
-    private String topic;
-    
-    private String link;
+    @Column(nullable = false)
+    private String platform;
 
-    @Column(columnDefinition = "smallint")
-    private Integer difficulty;
+    private String url;
 
-    @Column(columnDefinition = "text")
-    private String approachNotes;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Difficulty difficulty;
 
-    private String status;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "primary_topic_id", nullable = false)
+    private Topic primaryTopic;
 
-    private String confidence;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "problem_topics",
+            joinColumns = @JoinColumn(name = "problem_id"),
+            inverseJoinColumns = @JoinColumn(name = "topic_id")
+    )
+    @Builder.Default
+    private Set<Topic> extraTopics = new HashSet<>();
 
+    private String optimalTime;
+    private String optimalSpace;
+
+    @Column(name = "current_status")
+    private String currentStatus;
+
+    @Column(name = "last_successful_at")
+    private LocalDateTime lastSuccessfulAt;
+
+    @Column(name = "next_revisit_date")
     private LocalDate nextRevisitDate;
-
-    @Builder.Default
-    @Column(nullable = false)
-    private Integer totalAttempts = 0;
-
-    @Builder.Default
-    @Column(nullable = false)
-    private Integer timesSolved = 0;
 
     @CreationTimestamp
     @Column(updatable = false)

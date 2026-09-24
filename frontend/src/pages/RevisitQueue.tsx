@@ -1,118 +1,283 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useApiClient } from '../api/useApiClient';
 import type { Problem } from '../types/problem';
+import {
+  Container,
+  Typography,
+  Box,
+  Button,
+  Tabs,
+  Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Chip,
+  CircularProgress,
+  Alert,
+  Tooltip,
+} from '@mui/material';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import EventBusyIcon from '@mui/icons-material/EventBusy';
+import TodayIcon from '@mui/icons-material/Today';
+import UpcomingIcon from '@mui/icons-material/Upcoming';
+import HelpOutlinedIcon from '@mui/icons-material/HelpOutlined';
 
 type Bucket = 'overdue' | 'due' | 'upcoming' | 'unscheduled';
 
 export default function RevisitQueue() {
-    const fetchApi = useApiClient();
-    const [activeBucket, setActiveBucket] = useState<Bucket>('due');
+  const fetchApi = useApiClient();
+  const navigate = useNavigate();
+  const [activeBucket, setActiveBucket] = useState<Bucket>('due');
 
-    const { data: problems, isLoading, error } = useQuery<Problem[]>({
-        queryKey: ['revisitQueue', activeBucket],
-        queryFn: async () => {
-            const res = await fetchApi(`/revisit-queue?bucket=${activeBucket}`);
-            if (!res.ok) throw new Error('Failed to fetch queue');
-            return res.json();
-        }
-    });
+  const { data: problems = [], isLoading, error } = useQuery<Problem[]>({
+    queryKey: ['revisitQueue', activeBucket],
+    queryFn: async () => {
+      const res = await fetchApi(`/revisit-queue?bucket=${activeBucket}`);
+      if (!res.ok) throw new Error('Failed to fetch queue');
+      return res.json();
+    },
+  });
 
-    const tabs: { id: Bucket; label: string }[] = [
-        { id: 'overdue', label: 'Overdue' },
-        { id: 'due', label: 'Due Today' },
-        { id: 'upcoming', label: 'Upcoming' },
-        { id: 'unscheduled', label: 'Unscheduled' },
-    ];
+  const getDifficultyChip = (diff: string) => {
+    switch (diff) {
+      case 'EASY':
+        return (
+          <Chip
+            label="Easy"
+            size="small"
+            sx={{ backgroundColor: '#DEF7EC', color: '#03543F', fontWeight: 600, fontSize: '0.75rem' }}
+          />
+        );
+      case 'MEDIUM':
+        return (
+          <Chip
+            label="Medium"
+            size="small"
+            sx={{ backgroundColor: '#FEF3C7', color: '#92400E', fontWeight: 600, fontSize: '0.75rem' }}
+          />
+        );
+      case 'HARD':
+        return (
+          <Chip
+            label="Hard"
+            size="small"
+            sx={{ backgroundColor: '#FDECEC', color: '#9B1C1C', fontWeight: 600, fontSize: '0.75rem' }}
+          />
+        );
+      default:
+        return <Chip label={diff || '-'} size="small" variant="outlined" />;
+    }
+  };
 
-    return (
-        <div className="min-h-screen bg-gray-50 p-8">
-            <div className="max-w-6xl mx-auto">
-                <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Revisit Queue</h1>
-                    <Link 
-                        to="/dashboard" 
-                        className="text-blue-600 hover:underline font-medium"
+  const tabs: { id: Bucket; label: string; icon: React.ReactElement; color?: string }[] = [
+    { id: 'overdue', label: 'Overdue', icon: <EventBusyIcon sx={{ fontSize: 18 }} /> },
+    { id: 'due', label: 'Due Today', icon: <TodayIcon sx={{ fontSize: 18 }} /> },
+    { id: 'upcoming', label: 'Upcoming', icon: <UpcomingIcon sx={{ fontSize: 18 }} /> },
+    { id: 'unscheduled', label: 'Unscheduled', icon: <HelpOutlinedIcon sx={{ fontSize: 18 }} /> },
+  ];
+
+  return (
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      {/* Header */}
+      <Box sx={{ mb: 3 }}>
+        <Typography
+          variant="h4"
+          component="h1"
+          sx={{
+            fontFamily: '"Space Grotesk", sans-serif',
+            fontWeight: 700,
+            color: '#171A2B',
+            letterSpacing: '-0.02em',
+            mb: 0.5,
+          }}
+        >
+          Spaced Repetition Queue
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Strengthen neural recall by re-attempting problems on their optimal retention day.
+        </Typography>
+      </Box>
+
+      {/* Tabs Filter Paper */}
+      <Paper elevation={0} sx={{ mb: 3, border: '1px solid #E3E6EF', borderRadius: 3, overflow: 'hidden' }}>
+        <Tabs
+          value={activeBucket}
+          onChange={(_, val) => setActiveBucket(val)}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{
+            px: 2,
+            borderBottom: '1px solid #E3E6EF',
+            backgroundColor: '#FAFBFC',
+            '& .MuiTab-root': {
+              minHeight: 56,
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              textTransform: 'none',
+              color: '#64748B',
+              '&.Mui-selected': {
+                color: activeBucket === 'overdue' ? '#DC2626' : '#4F3FF0',
+              },
+            },
+            '& .MuiTabs-indicator': {
+              backgroundColor: activeBucket === 'overdue' ? '#DC2626' : '#4F3FF0',
+              height: 3,
+              borderRadius: '3px 3px 0 0',
+            },
+          }}
+        >
+          {tabs.map((tab) => (
+            <Tab
+              key={tab.id}
+              value={tab.id}
+              icon={tab.icon}
+              iconPosition="start"
+              label={tab.label}
+            />
+          ))}
+        </Tabs>
+
+        {/* Content area inside paper */}
+        <Box sx={{ p: 0 }}>
+          {isLoading ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 10 }}>
+              <CircularProgress size={36} sx={{ color: '#4F3FF0', mb: 2 }} />
+              <Typography variant="body2" color="text.secondary">
+                Loading queue items...
+              </Typography>
+            </Box>
+          ) : error ? (
+            <Box sx={{ p: 3 }}>
+              <Alert severity="error">Failed to load revisit queue. Please try again.</Alert>
+            </Box>
+          ) : problems.length === 0 ? (
+            <Box sx={{ py: 8, px: 3, textAlign: 'center' }}>
+              <Typography
+                variant="h6"
+                sx={{ fontFamily: '"Space Grotesk", sans-serif', fontWeight: 600, mb: 1, color: '#171A2B' }}
+              >
+                No problems in the {activeBucket} queue
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 440, mx: 'auto', mb: 3 }}>
+                {activeBucket === 'overdue'
+                  ? 'Great work! You have no overdue problems waiting for review.'
+                  : activeBucket === 'due'
+                  ? 'All caught up for today! Check upcoming problems or log new ones.'
+                  : 'Problems solved will be scheduled here automatically based on performance.'}
+              </Typography>
+              <Button
+                component={RouterLink}
+                to="/problems"
+                variant="outlined"
+                sx={{ borderRadius: 2 }}
+              >
+                Browse All Problems
+              </Button>
+            </Box>
+          ) : (
+            <TableContainer>
+              <Table sx={{ minWidth: 700 }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Problem Title</TableCell>
+                    <TableCell>Topic</TableCell>
+                    <TableCell>Difficulty</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Revisit Date</TableCell>
+                    <TableCell align="right">Action</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {problems.map((p) => (
+                    <TableRow
+                      key={p.id}
+                      hover
+                      sx={{
+                        transition: 'background-color 0.15s ease',
+                        '&:hover': { backgroundColor: '#F8FAFC !important' },
+                      }}
                     >
-                        &larr; Back to Dashboard
-                    </Link>
-                </div>
-
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
-                    <div className="flex border-b border-gray-200">
-                        {tabs.map(tab => (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveBucket(tab.id)}
-                                className={`flex-1 py-4 text-center font-medium text-sm transition-colors
-                                    ${activeBucket === tab.id 
-                                        ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50' 
-                                        : 'text-gray-600 hover:bg-gray-50'
-                                    }`}
-                            >
-                                {tab.label}
-                            </button>
-                        ))}
-                    </div>
-
-                    <div className="p-6">
-                        {isLoading ? (
-                            <div className="text-center py-12 text-gray-500">Loading problems...</div>
-                        ) : error ? (
-                            <div className="bg-red-50 text-red-600 p-4 rounded-md text-center">Error loading queue.</div>
-                        ) : problems?.length === 0 ? (
-                            <div className="text-center py-12">
-                                <p className="text-gray-500">No problems found in the {activeBucket} bucket.</p>
-                            </div>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr className="bg-gray-50 border-b border-gray-200">
-                                            <th className="p-4 font-semibold text-gray-700">Name</th>
-                                            <th className="p-4 font-semibold text-gray-700">Topic</th>
-                                            <th className="p-4 font-semibold text-gray-700">Difficulty</th>
-                                            <th className="p-4 font-semibold text-gray-700">Status</th>
-                                            <th className="p-4 font-semibold text-gray-700">Next Revisit</th>
-                                            <th className="p-4 font-semibold text-gray-700 text-right">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {problems?.map(p => (
-                                            <tr key={p.id} className="border-b border-gray-100 hover:bg-gray-50">
-                                                <td className="p-4 font-medium text-gray-900">{p.name}</td>
-                                                <td className="p-4 text-gray-600">{p.topic || '-'}</td>
-                                                <td className="p-4">
-                                                    <span className={`px-2 py-1 text-xs font-semibold rounded-full 
-                                                        ${p.difficulty === 1 ? 'bg-green-100 text-green-800' : 
-                                                          p.difficulty === 2 ? 'bg-yellow-100 text-yellow-800' : 
-                                                          p.difficulty === 3 ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>
-                                                        {p.difficulty === 1 ? 'Easy' : p.difficulty === 2 ? 'Medium' : p.difficulty === 3 ? 'Hard' : '-'}
-                                                    </span>
-                                                </td>
-                                                <td className="p-4">
-                                                    <span className={`text-sm ${p.status === 'Solved' ? 'text-green-600 font-semibold' : 'text-gray-600'}`}>
-                                                        {p.status}
-                                                    </span>
-                                                </td>
-                                                <td className="p-4 font-medium text-gray-700">
-                                                    {p.nextRevisitDate || 'Unscheduled'}
-                                                </td>
-                                                <td className="p-4 text-right">
-                                                    <Link to={`/problems/${p.id}/attempts`} className="text-blue-600 hover:text-blue-900 text-sm font-medium">
-                                                        Attempt Now &rarr;
-                                                    </Link>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                      <TableCell>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#171A2B' }}>
+                          {p.title}
+                        </Typography>
+                        {p.platform && (
+                          <Typography variant="caption" sx={{ color: '#94A3B8' }}>
+                            {p.platform}
+                          </Typography>
                         )}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
+                      </TableCell>
+
+                      <TableCell>
+                        <Chip
+                          label={p.primaryTopicName || 'General'}
+                          size="small"
+                          sx={{ backgroundColor: '#F1F5F9', color: '#334155', fontWeight: 500, fontSize: '0.75rem' }}
+                        />
+                      </TableCell>
+
+                      <TableCell>{getDifficultyChip(p.difficulty)}</TableCell>
+
+                      <TableCell>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: p.currentStatus === 'Solved' || p.currentStatus === 'Solved optimally' ? 600 : 500,
+                            color: p.currentStatus === 'Solved' || p.currentStatus === 'Solved optimally' ? '#065F46' : '#64748B',
+                          }}
+                        >
+                          {p.currentStatus}
+                        </Typography>
+                      </TableCell>
+
+                      <TableCell>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: '"IBM Plex Mono", monospace',
+                            fontSize: '0.825rem',
+                            color: activeBucket === 'overdue' ? '#DC2626' : '#171A2B',
+                            fontWeight: activeBucket === 'overdue' ? 600 : 400,
+                          }}
+                        >
+                          {p.nextRevisitDate || 'Unscheduled'}
+                        </Typography>
+                      </TableCell>
+
+                      <TableCell align="right">
+                        <Tooltip title="Attempt with Blind Mode" arrow>
+                          <Button
+                            variant="contained"
+                            size="small"
+                            color={activeBucket === 'overdue' ? 'error' : 'primary'}
+                            startIcon={<PlayArrowIcon sx={{ fontSize: 16 }} />}
+                            onClick={() => navigate(`/problems/${p.id}/attempts`)}
+                            sx={{
+                              px: 2,
+                              py: 0.6,
+                              borderRadius: 2,
+                              fontWeight: 600,
+                              fontSize: '0.8rem',
+                            }}
+                          >
+                            Attempt Now
+                          </Button>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </Box>
+      </Paper>
+    </Container>
+  );
 }

@@ -1,1 +1,95 @@
 @import "tailwindcss";
+
+@theme {
+  --color-bg: #F5F6FA;
+  --color-surface: #FFFFFF;
+  --color-border: #E3E6EF;
+  --color-ink: #171A2B;
+  --color-ink-muted: #6B7280;
+  
+  --color-accent: #4F3FF0;
+  --color-accent-soft: #EEEBFF;
+  
+  --color-success: #0E9F6E;
+  --color-danger: #DC2626;
+  --color-danger-soft: #FDECEC;
+  --color-warning: #B45309;
+
+  --color-status-1: #E2E4EC; /* Not Attempted */
+  --color-status-2: #C7CCE3; /* Tried */
+  --color-status-3: #8B7FF5; /* Logic Done */
+  --color-status-4: #4F3FF0; /* Code Done */
+  --color-status-5: #10B981; /* Solved */
+  --color-status-6: #047857; /* Solved Optimally */
+
+  --font-heading: "Space Grotesk", sans-serif;
+  --font-body: "IBM Plex Sans", sans-serif;
+  --font-data: "IBM Plex Mono", monospace;
+  
+  --radius-card: 14px;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+
+  /* Accessible focus rings */
+  *:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Reusable Card Component */
+  .ds-card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    box-shadow: none; /* No drop shadow per DS */
+  }
+
+  /* Data typography */
+  .font-data {
+    font-family: var(--font-data);
+  }
+}
+
+@layer utilities {
+  /* Motion: Orchestrated load-in */
+  .ds-fade-in {
+    animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+  }
+  
+  .ds-slide-up {
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    .ds-fade-in, .ds-slide-up {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes fadeIn {
+    to { opacity: 1; }
+  }
+  @keyframes slideUp {
+    to { 
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}

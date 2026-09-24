@@ -26,7 +26,7 @@ public class AttemptController {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         UUID userId = UUID.fromString(userDetails.getId());
-        return ResponseEntity.ok(attemptService.createAttempt(problemId, request, userId));
+        return ResponseEntity.ok(attemptService.logAttempt(problemId, request, userId));
     }
 
     @GetMapping
@@ -35,6 +35,6 @@ public class AttemptController {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         UUID userId = UUID.fromString(userDetails.getId());
-        return ResponseEntity.ok(attemptService.getAttempts(problemId, userId));
+        return ResponseEntity.ok(attemptService.getAttemptsForProblem(problemId, userId));
     }
 }

@@ -1,25 +1,28 @@
 export interface Problem {
     id: string;
-    name: string;
-    topic: string;
-    link: string;
-    difficulty: number;
-    approachNotes: string;
-    status: string;
-    confidence: string;
-    nextRevisitDate: string;
-    totalAttempts: number;
-    timesSolved: number;
+    title: string;
+    platform: string;
+    url: string;
+    difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+    primaryTopicId: string;
+    primaryTopicName: string;
+    extraTopicNames: string[];
+    optimalTime?: string;
+    optimalSpace?: string;
+    currentStatus: string;
+    lastSuccessfulAt?: string;
+    nextRevisitDate?: string;
     createdAt: string;
     updatedAt: string;
 }
 
 export interface ProblemRequest {
-    name: string;
-    topic?: string;
-    link?: string;
-    difficulty?: number;
-    approachNotes?: string;
-    status?: string;
-    confidence?: string;
+    title: string;
+    platform?: string;
+    url?: string;
+    difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+    primaryTopicId: string;
+    extraTopicIds?: string[];
+    optimalTime?: string;
+    optimalSpace?: string;
 }

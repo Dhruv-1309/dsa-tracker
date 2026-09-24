@@ -1,15 +1,36 @@
 export interface Attempt {
     id: string;
     problemId: string;
-    date: string;
-    thinkingResult: string;
-    codingResult: string;
-    timeComplexity: string;
-    spaceComplexity: string;
-    confidence: string;
-    notes: string;
-    nextRevisitDate: string;
-    createdAt: string;
+    attemptedAt: string;
+    result: string;
+    understood: boolean;
+    logicFound: boolean;
+    codeCompleted: boolean;
+    timeTakenMin?: number;
+    timeComplexity?: string;
+    spaceComplexity?: string;
+    confidence?: number;
+    approach?: string;
+    mistakes?: string;
+    code?: string;
+    language?: string;
+    mistakeTags: string[];
 }
 
-export type AttemptRequest = Partial<Omit<Attempt, 'id' | 'problemId' | 'createdAt'>>;
+export type AttemptRequest = {
+    attemptedAt?: string;
+    result: string;
+    understood: boolean;
+    logicFound: boolean;
+    codeCompleted: boolean;
+    timeTakenMin?: number;
+    timeComplexity?: string;
+    spaceComplexity?: string;
+    confidence?: number;
+    approach?: string;
+    mistakes?: string;
+    code?: string;
+    language?: string;
+    mistakeTagIds?: string[];
+    nextRevisitDate?: string;
+};

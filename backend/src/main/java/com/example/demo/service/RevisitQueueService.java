@@ -2,6 +2,7 @@ package com.example.demo.service;
 
 import com.example.demo.dto.ProblemResponse;
 import com.example.demo.model.Problem;
+import com.example.demo.model.Topic;
 import com.example.demo.repository.ProblemRepository;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,10 @@ public class RevisitQueueService {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(cb.equal(root.get("user").get("id"), userId));
 
+            // F-21: A problem is on the revision list once it has at least one successful attempt.
+            // A successful attempt implies lastSuccessfulAt is not null.
+            predicates.add(cb.isNotNull(root.get("lastSuccessfulAt")));
+
             if ("due".equalsIgnoreCase(bucket)) {
                 predicates.add(cb.equal(root.get("nextRevisitDate"), today));
             } else if ("overdue".equalsIgnoreCase(bucket)) {
@@ -45,9 +50,8 @@ public class RevisitQueueService {
 
         Sort sort;
         if ("unscheduled".equalsIgnoreCase(bucket)) {
-            // Sort by latest attempt ascending (oldest first).
-            // Since creating an attempt updates the Problem, updatedAt represents the latest attempt date.
-            sort = Sort.by(Sort.Direction.ASC, "updatedAt"); 
+            // F-22: Sort by the date of the most recent successful attempt, oldest first.
+            sort = Sort.by(Sort.Direction.ASC, "lastSuccessfulAt"); 
         } else {
             sort = Sort.by(Sort.Direction.ASC, "nextRevisitDate");
         }
@@ -61,16 +65,18 @@ public class RevisitQueueService {
     private ProblemResponse mapToResponse(Problem problem) {
         return ProblemResponse.builder()
                 .id(problem.getId())
-                .name(problem.getName())
-                .topic(problem.getTopic())
-                .link(problem.getLink())
+                .title(problem.getTitle())
+                .platform(problem.getPlatform())
+                .url(problem.getUrl())
                 .difficulty(problem.getDifficulty())
-                .approachNotes(problem.getApproachNotes())
-                .status(problem.getStatus())
-                .confidence(problem.getConfidence())
+                .primaryTopicId(problem.getPrimaryTopic().getId())
+                .primaryTopicName(problem.getPrimaryTopic().getName())
+                .extraTopicNames(problem.getExtraTopics().stream().map(Topic::getName).collect(Collectors.toSet()))
+                .optimalTime(problem.getOptimalTime())
+                .optimalSpace(problem.getOptimalSpace())
+                .currentStatus(problem.getCurrentStatus())
+                .lastSuccessfulAt(problem.getLastSuccessfulAt())
                 .nextRevisitDate(problem.getNextRevisitDate())
-                .totalAttempts(problem.getTotalAttempts())
-                .timesSolved(problem.getTimesSolved())
                 .createdAt(problem.getCreatedAt())
                 .updatedAt(problem.getUpdatedAt())
                 .build();

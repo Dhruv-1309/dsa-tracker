@@ -25,6 +25,12 @@ public class User {
     @Column(nullable = false)
     private String passwordHash;
 
+    @Column(name = "display_name")
+    private String displayName;
+
+    @Column
+    private String timezone;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
