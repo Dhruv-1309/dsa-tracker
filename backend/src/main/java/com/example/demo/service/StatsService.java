@@ -59,13 +59,24 @@ public class StatsService {
 
     public List<HeatmapEntry> getHeatmap(UUID userId, int year) {
         return attemptRepository.countAttemptsByDateForUserAndYear(userId, year).stream()
-                .map(row -> HeatmapEntry.builder()
-                        .date(((Date) row[0]).toLocalDate())
-                        .count(((Number) row[1]).longValue())
-                        .build())
+                .map(row -> {
+                    LocalDate d;
+                    if (row[0] instanceof LocalDate) {
+                        d = (LocalDate) row[0];
+                    } else if (row[0] instanceof Date) {
+                        d = ((Date) row[0]).toLocalDate();
+                    } else {
+                        d = LocalDate.parse(row[0].toString());
+                    }
+                    return HeatmapEntry.builder()
+                            .date(d)
+                            .count(((Number) row[1]).longValue())
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<TopicProgressResponse> getTopicsProgress(UUID userId) {
         List<Problem> problems = problemRepository.findByUserId(userId);
         List<Topic> availableTopics = topicRepository.findAllAvailableForUser(userId);

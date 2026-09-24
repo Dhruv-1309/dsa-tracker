@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ public class RevisitQueueService {
 
     private final ProblemRepository problemRepository;
 
+    @Transactional(readOnly = true)
     public List<ProblemResponse> getQueue(UUID userId, String bucket) {
         LocalDate today = LocalDate.now();
 

@@ -31,6 +31,7 @@ public class ProblemService {
     private final UserRepository userRepository;
     private final TopicRepository topicRepository;
 
+    @Transactional(readOnly = true)
     public List<ProblemResponse> getProblems(UUID userId, String search, String topic, String status, Sort sort) {
         Specification<Problem> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -58,6 +59,7 @@ public class ProblemService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public ProblemResponse getProblemById(UUID id, UUID userId) {
         Problem problem = problemRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Problem not found"));

@@ -31,6 +31,7 @@ public class AttemptService {
     private final UserRepository userRepository;
     private final MistakeTagRepository mistakeTagRepository;
 
+    @Transactional(readOnly = true)
     public List<AttemptResponse> getAttemptsForProblem(UUID problemId, UUID userId) {
         // Verify user owns problem
         problemRepository.findByIdAndUserId(problemId, userId)
