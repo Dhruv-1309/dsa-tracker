@@ -12,7 +12,19 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [token, setToken] = useState<string | null>(null);
 
-    const logout = () => setToken(null);
+    const logout = () => {
+        if (token) {
+            fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            }).catch(() => {
+                // Ignore network errors on logout
+            });
+        }
+        setToken(null);
+    };
 
     return (
         <AuthContext.Provider value={{ token, setToken, logout }}>

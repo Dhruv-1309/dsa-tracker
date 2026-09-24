@@ -23,4 +23,12 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<java.util.Map<String, String>> logout(
+            @RequestHeader(value = "Authorization", required = false) String authHeader
+    ) {
+        authService.logout(authHeader);
+        return ResponseEntity.ok(java.util.Map.of("message", "Logged out successfully"));
+    }
 }

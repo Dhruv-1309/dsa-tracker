@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useApiClient } from '../api/useApiClient';
 import type { Problem } from '../types/problem';
+import { sanitizeUrl } from '../utils/security';
 import {
   Container,
   Typography,
@@ -420,12 +421,12 @@ export default function ProblemList() {
                       >
                         {p.title}
                       </Link>
-                      {p.url && (
+                      {sanitizeUrl(p.url) && (
                         <Tooltip title="Open problem on platform" arrow>
                           <IconButton
                             size="small"
                             component="a"
-                            href={p.url}
+                            href={sanitizeUrl(p.url)}
                             target="_blank"
                             rel="noopener noreferrer"
                             sx={{ color: '#94A3B8', p: 0.5, '&:hover': { color: '#4F3FF0' } }}

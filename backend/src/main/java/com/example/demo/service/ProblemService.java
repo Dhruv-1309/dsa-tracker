@@ -66,6 +66,7 @@ public class ProblemService {
 
     @Transactional
     public ProblemResponse createProblem(ProblemRequest request, UUID userId) {
+        validateUrl(request.getUrl());
         var user = userRepository.findById(userId).orElseThrow();
         
         Topic primaryTopic = topicRepository.findByIdAndAvailableForUser(request.getPrimaryTopicId(), userId)
@@ -108,6 +109,7 @@ public class ProblemService {
 
     @Transactional
     public ProblemResponse updateProblem(UUID id, ProblemRequest request, UUID userId) {
+        validateUrl(request.getUrl());
         Problem problem = problemRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Problem not found"));
 
@@ -162,5 +164,14 @@ public class ProblemService {
                 .createdAt(problem.getCreatedAt())
                 .updatedAt(problem.getUpdatedAt())
                 .build();
+    }
+
+    private void validateUrl(String url) {
+        if (url != null && !url.trim().isEmpty()) {
+            String trimmed = url.trim().toLowerCase();
+            if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Problem URL must begin with http:// or https://");
+            }
+        }
     }
 }

@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useApiClient } from '../api/useApiClient';
 import type { Problem } from '../types/problem';
 import type { Attempt, AttemptRequest } from '../types/attempt';
+import { sanitizeUrl } from '../utils/security';
 import {
   Container,
   Typography,
@@ -271,10 +272,10 @@ export default function ProblemAttempts() {
               {problem.platform && (
                 <Chip label={problem.platform} size="small" variant="outlined" sx={{ fontWeight: 500 }} />
               )}
-              {problem.url && (
+              {sanitizeUrl(problem.url) && (
                 <Button
                   component="a"
-                  href={problem.url}
+                  href={sanitizeUrl(problem.url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   size="small"
