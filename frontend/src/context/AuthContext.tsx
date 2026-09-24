@@ -1,5 +1,6 @@
 import { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
+import { API_BASE_URL } from '../api/config';
 
 interface AuthContextType {
     token: string | null;
@@ -14,7 +15,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = () => {
         if (token) {
-            fetch('/api/auth/logout', {
+            fetch(`${API_BASE_URL}/api/auth/logout`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`

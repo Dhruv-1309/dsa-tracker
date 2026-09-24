@@ -23,6 +23,7 @@ import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import InsightsIcon from '@mui/icons-material/Insights';
 import { TextEffect } from '../components/motion/TextEffect';
+import { API_BASE_URL } from '../api/config';
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -44,7 +45,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/register', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

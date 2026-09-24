@@ -1,5 +1,6 @@
 import { useAuth } from '../context/AuthContext';
 import { useCallback } from 'react';
+import { API_BASE_URL } from './config';
 
 export function useApiClient() {
     const { token, logout } = useAuth();
@@ -15,7 +16,7 @@ export function useApiClient() {
             headers.set('Content-Type', 'application/json');
         }
 
-        const response = await fetch(`/api${endpoint}`, {
+        const response = await fetch(`${API_BASE_URL}/api${endpoint}`, {
             ...options,
             headers,
         });
