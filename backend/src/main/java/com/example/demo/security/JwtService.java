@@ -17,8 +17,7 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
-    // 256-bit secret key for HMAC-SHA256
-    @Value("${application.security.jwt.secret-key:REDACTED_DEV_KEY}")
+    @Value("${application.security.jwt.secret-key}")
     private String secretKey;
 
     @Value("${application.security.jwt.expiration:86400000}")

@@ -24,3 +24,9 @@ target/
 .project
 .classpath
 .settings/
+
+# Environment and Secret Files
+.env
+.env.*
+!.env.example
+
