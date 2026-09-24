@@ -62,14 +62,30 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
         String correlationId = UUID.randomUUID().toString();
-        log.warn("[CorrelationId: {}] Validation failed for request: {}", correlationId, ex.getMessage());
+        String message = ex.getBindingResult().getFieldErrors().stream()
+                .map(err -> err.getField() + ": " + err.getDefaultMessage())
+                .findFirst()
+                .orElse("Validation failed for request parameters");
+
+        log.warn("[CorrelationId: {}] Validation failed: {}", correlationId, message);
 
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", Instant.now().toString());
         body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("error", "Validation failed for request parameters");
+        body.put("error", message);
         body.put("correlationId", correlationId);
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleNoResourceFound(org.springframework.web.servlet.resource.NoResourceFoundException ex) {
+        String correlationId = UUID.randomUUID().toString();
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", Instant.now().toString());
+        body.put("status", HttpStatus.NOT_FOUND.value());
+        body.put("error", "Resource not found");
+        body.put("correlationId", correlationId);
+        return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)

@@ -4,6 +4,7 @@ import com.example.demo.dto.AttemptRequest;
 import com.example.demo.dto.AttemptResponse;
 import com.example.demo.security.CustomUserDetails;
 import com.example.demo.service.AttemptService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,7 +23,7 @@ public class AttemptController {
     @PostMapping
     public ResponseEntity<AttemptResponse> createAttempt(
             @PathVariable UUID problemId,
-            @RequestBody AttemptRequest request,
+            @Valid @RequestBody AttemptRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         UUID userId = UUID.fromString(userDetails.getId());

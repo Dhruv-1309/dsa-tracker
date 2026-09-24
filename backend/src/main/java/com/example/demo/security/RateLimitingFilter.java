@@ -21,9 +21,13 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class RateLimitingFilter extends OncePerRequestFilter {
 
-    // Maximum 5 attempts per 60 seconds per IP for auth endpoints
+    // Maximum 5 attempts per 60 seconds per IP for sensitive auth endpoints
     private static final int MAX_AUTH_ATTEMPTS = 5;
-    private static final long AUTH_WINDOW_MS = 60_000L; // 1 minute
+
+    // Maximum 120 requests per 60 seconds per IP for general API endpoints
+    private static final int MAX_API_ATTEMPTS = 120;
+
+    private static final long WINDOW_MS = 60_000L; // 1 minute
 
     private final Map<String, Deque<Long>> requestCounts = new ConcurrentHashMap<>();
 
@@ -35,28 +39,34 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
         String uri = request.getRequestURI();
 
-        // Rate limit sensitive authentication endpoints (login, register)
-        if (uri.equals("/api/auth/login") || uri.equals("/api/auth/register")) {
+        if (uri.startsWith("/api/")) {
+            boolean isAuthEndpoint = uri.equals("/api/auth/login") || uri.equals("/api/auth/register");
+            int maxAllowed = isAuthEndpoint ? MAX_AUTH_ATTEMPTS : MAX_API_ATTEMPTS;
             String clientIp = extractClientIp(request);
-            String bucketKey = uri + ":" + clientIp;
+            String bucketKey = (isAuthEndpoint ? "auth:" + uri : "api:") + clientIp;
             long now = System.currentTimeMillis();
 
             synchronized (requestCounts) {
                 Deque<Long> timestamps = requestCounts.computeIfAbsent(bucketKey, k -> new ArrayDeque<>());
 
                 // Purge expired timestamps outside the 1-minute window
-                while (!timestamps.isEmpty() && now - timestamps.peekFirst() > AUTH_WINDOW_MS) {
+                while (!timestamps.isEmpty() && now - timestamps.peekFirst() > WINDOW_MS) {
                     timestamps.pollFirst();
                 }
 
-                if (timestamps.size() >= MAX_AUTH_ATTEMPTS) {
+                if (timestamps.size() >= maxAllowed) {
                     response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
                     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
                     response.setHeader("Retry-After", "60");
 
                     String correlationId = UUID.randomUUID().toString();
+                    String message = isAuthEndpoint
+                            ? "Too many authentication attempts. Please try again after 60 seconds."
+                            : "Too many API requests. Please slow down.";
+
                     String json = String.format(
-                            "{\"error\":\"Too many attempts. Please try again after 60 seconds.\",\"status\":429,\"correlationId\":\"%s\",\"timestamp\":\"%s\"}",
+                            "{\"error\":\"%s\",\"status\":429,\"correlationId\":\"%s\",\"timestamp\":\"%s\"}",
+                            message,
                             correlationId,
                             Instant.now().toString()
                     );

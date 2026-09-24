@@ -4,6 +4,7 @@ import com.example.demo.dto.ProblemRequest;
 import com.example.demo.dto.ProblemResponse;
 import com.example.demo.security.CustomUserDetails;
 import com.example.demo.service.ProblemService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
@@ -43,7 +44,7 @@ public class ProblemController {
 
     @PostMapping
     public ResponseEntity<ProblemResponse> createProblem(
-            @RequestBody ProblemRequest request,
+            @Valid @RequestBody ProblemRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         UUID userId = UUID.fromString(userDetails.getId());
@@ -53,7 +54,7 @@ public class ProblemController {
     @PutMapping("/{id}")
     public ResponseEntity<ProblemResponse> updateProblem(
             @PathVariable UUID id,
-            @RequestBody ProblemRequest request,
+            @Valid @RequestBody ProblemRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         UUID userId = UUID.fromString(userDetails.getId());
