@@ -20,4 +20,6 @@ public interface TopicRepository extends JpaRepository<Topic, UUID> {
     Optional<Topic> findByIdAndAvailableForUser(@Param("id") UUID id, @Param("userId") UUID userId);
     
     Optional<Topic> findByName(String name);
+    List<Topic> findByUserId(UUID userId);
+    void deleteByUserId(UUID userId);
 }

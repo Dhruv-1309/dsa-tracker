@@ -16,6 +16,7 @@ public interface ProblemRepository extends JpaRepository<Problem, UUID>, JpaSpec
     List<Problem> findByUserId(UUID userId);
     Optional<Problem> findByIdAndUserId(UUID id, UUID userId);
     void deleteByIdAndUserId(UUID id, UUID userId);
+    void deleteByUserId(UUID userId);
     long countByUserId(UUID userId);
 
     @Query("SELECT p.currentStatus, COUNT(p) FROM Problem p WHERE p.user.id = :userId GROUP BY p.currentStatus")

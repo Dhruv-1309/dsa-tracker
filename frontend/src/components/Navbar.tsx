@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLocation, useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useApiClient } from '../api/useApiClient';
 import {
   AppBar,
   Toolbar,
@@ -15,6 +16,12 @@ import {
   ListItemIcon,
   ListItemText,
   Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  CircularProgress,
 } from '@mui/material';
 import TerminalIcon from '@mui/icons-material/Terminal';
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
@@ -24,12 +31,16 @@ import AddIcon from '@mui/icons-material/Add';
 import LogoutIcon from '@mui/icons-material/Logout';
 import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import TagIcon from '@mui/icons-material/Tag';
+import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 
 export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const fetchApi = useApiClient();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -43,6 +54,20 @@ export default function Navbar() {
     handleMenuClose();
     logout();
     navigate('/login');
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      const res = await fetchApi('/users/me', { method: 'DELETE' });
+      if (res.ok || res.status === 204) {
+        logout();
+        navigate('/register');
+      }
+    } finally {
+      setDeleting(false);
+      setDeleteDialogOpen(false);
+    }
   };
 
   const navLinks = [
@@ -208,16 +233,73 @@ export default function Navbar() {
                 <Divider sx={{ my: 1 }} />
               </Box>
 
-              <MenuItem onClick={handleLogout} sx={{ color: '#DC2626' }}>
+              <MenuItem onClick={handleLogout} sx={{ color: '#475569' }}>
                 <ListItemIcon>
-                  <LogoutIcon sx={{ color: '#DC2626', fontSize: 20 }} />
+                  <LogoutIcon sx={{ color: '#475569', fontSize: 20 }} />
                 </ListItemIcon>
                 <ListItemText primary="Sign Out" />
+              </MenuItem>
+
+              <Divider sx={{ my: 1 }} />
+
+              <MenuItem
+                onClick={() => {
+                  handleMenuClose();
+                  setDeleteDialogOpen(true);
+                }}
+                sx={{ color: '#DC2626' }}
+              >
+                <ListItemIcon>
+                  <DeleteOutlinedIcon sx={{ color: '#DC2626', fontSize: 20 }} />
+                </ListItemIcon>
+                <ListItemText primary="Delete Account" />
               </MenuItem>
             </Menu>
           </Stack>
         </Toolbar>
       </Container>
+
+      {/* Account Deletion Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => !deleting && setDeleteDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        slotProps={{
+          paper: {
+            sx: { borderRadius: 3, p: 1 },
+          },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: '#DC2626' }}>
+          Delete Account & All Data?
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ color: '#475569', fontSize: '0.925rem' }}>
+            This will permanently delete your account, your problem records, attempt history, and revision schedule. This action is irreversible and compliant with complete data removal.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => setDeleteDialogOpen(false)}
+            disabled={deleting}
+            variant="outlined"
+            sx={{ borderRadius: 2 }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteAccount}
+            disabled={deleting}
+            variant="contained"
+            color="error"
+            startIcon={deleting && <CircularProgress size={16} color="inherit" />}
+            sx={{ borderRadius: 2, fontWeight: 600 }}
+          >
+            {deleting ? 'Deleting...' : 'Permanently Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </AppBar>
   );
 }

@@ -1,6 +1,6 @@
 package com.example.demo.controller;
 
-import com.example.demo.model.MistakeTag;
+import com.example.demo.dto.MistakeTagResponse;
 import com.example.demo.repository.MistakeTagRepository;
 import com.example.demo.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/mistake-tags")
@@ -21,10 +22,17 @@ public class MistakeTagController {
     private final MistakeTagRepository mistakeTagRepository;
 
     @GetMapping
-    public ResponseEntity<List<MistakeTag>> getMistakeTags(
+    public ResponseEntity<List<MistakeTagResponse>> getMistakeTags(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         UUID userId = UUID.fromString(userDetails.getId());
-        return ResponseEntity.ok(mistakeTagRepository.findAllAvailableForUser(userId));
+        List<MistakeTagResponse> response = mistakeTagRepository.findAllAvailableForUser(userId)
+                .stream()
+                .map(tag -> MistakeTagResponse.builder()
+                        .id(tag.getId())
+                        .name(tag.getName())
+                        .build())
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 }

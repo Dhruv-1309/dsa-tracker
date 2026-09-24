@@ -12,6 +12,8 @@ import java.util.UUID;
 @Repository
 public interface AttemptRepository extends JpaRepository<Attempt, UUID> {
     List<Attempt> findByProblemIdAndUserIdOrderByAttemptedAtDesc(UUID problemId, UUID userId);
+    List<Attempt> findByUserId(UUID userId);
+    void deleteByUserId(UUID userId);
 
     @Query(value = "SELECT DATE(a.attempted_at) as attempt_date, COUNT(a.id) FROM attempts a WHERE a.user_id = :userId AND EXTRACT(YEAR FROM a.attempted_at) = :year GROUP BY DATE(a.attempted_at)", nativeQuery = true)
     List<Object[]> countAttemptsByDateForUserAndYear(@Param("userId") UUID userId, @Param("year") int year);

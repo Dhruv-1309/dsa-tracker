@@ -18,4 +18,7 @@ public interface MistakeTagRepository extends JpaRepository<MistakeTag, UUID> {
 
     @Query("SELECT t FROM MistakeTag t WHERE t.id = :id AND (t.user IS NULL OR t.user.id = :userId)")
     Optional<MistakeTag> findByIdAndAvailableForUser(@Param("id") UUID id, @Param("userId") UUID userId);
+
+    List<MistakeTag> findByUserId(UUID userId);
+    void deleteByUserId(UUID userId);
 }
