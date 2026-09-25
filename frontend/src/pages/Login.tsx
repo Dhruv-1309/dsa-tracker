@@ -19,7 +19,7 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import TerminalIcon from '@mui/icons-material/Terminal';
+import Logo from '../components/Logo';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import AutoGraphIcon from '@mui/icons-material/AutoGraph';
@@ -114,32 +114,9 @@ export default function Login() {
 
           <div>
             {/* Logo Header */}
-            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mb: 6 }}>
-              <Box
-                sx={{
-                  width: 42,
-                  height: 42,
-                  borderRadius: 2.5,
-                  backgroundColor: '#4F3FF0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 4px 14px rgba(79, 63, 240, 0.4)',
-                }}
-              >
-                <TerminalIcon sx={{ color: '#FFFFFF', fontSize: 24 }} />
-              </Box>
-              <Typography
-                variant="h5"
-                sx={{
-                  fontFamily: '"Space Grotesk", sans-serif',
-                  fontWeight: 700,
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                DSA Tracker
-              </Typography>
-            </Stack>
+            <Box sx={{ mb: 6 }}>
+              <Logo size={36} variant="inverted" />
+            </Box>
 
             <Chip
               icon={<AutoGraphIcon sx={{ fontSize: '1rem !important', color: '#EEEBFF !important' }} />}

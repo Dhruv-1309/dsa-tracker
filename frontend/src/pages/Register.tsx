@@ -18,7 +18,7 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import TerminalIcon from '@mui/icons-material/Terminal';
+import Logo from '../components/Logo';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import InsightsIcon from '@mui/icons-material/Insights';
@@ -117,32 +117,9 @@ export default function Register() {
 
           <div>
             {/* Logo Header */}
-            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mb: 6 }}>
-              <Box
-                sx={{
-                  width: 42,
-                  height: 42,
-                  borderRadius: 2.5,
-                  backgroundColor: '#0E9F6E',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 4px 14px rgba(14, 159, 110, 0.4)',
-                }}
-              >
-                <TerminalIcon sx={{ color: '#FFFFFF', fontSize: 24 }} />
-              </Box>
-              <Typography
-                variant="h5"
-                sx={{
-                  fontFamily: '"Space Grotesk", sans-serif',
-                  fontWeight: 700,
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                DSA Tracker
-              </Typography>
-            </Stack>
+            <Box sx={{ mb: 6 }}>
+              <Logo size={36} variant="inverted" />
+            </Box>
 
             <Chip
               icon={<InsightsIcon sx={{ fontSize: '1rem !important', color: '#DEF7EC !important' }} />}

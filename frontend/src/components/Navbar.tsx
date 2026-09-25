@@ -5,7 +5,6 @@ import { useApiClient } from '../api/useApiClient';
 import {
   AppBar,
   Toolbar,
-  Typography,
   Box,
   Button,
   IconButton,
@@ -23,7 +22,7 @@ import {
   DialogActions,
   CircularProgress,
 } from '@mui/material';
-import TerminalIcon from '@mui/icons-material/Terminal';
+import Logo from './Logo';
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import ReplayIcon from '@mui/icons-material/Replay';
@@ -97,32 +96,7 @@ export default function Navbar() {
             to="/dashboard"
             sx={{ textDecoration: 'none', color: 'inherit', alignItems: 'center' }}
           >
-            <Box
-              sx={{
-                width: 36,
-                height: 36,
-                borderRadius: 2,
-                backgroundColor: '#4F3FF0',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 2px 8px rgba(79, 63, 240, 0.3)',
-              }}
-            >
-              <TerminalIcon sx={{ color: '#FFFFFF', fontSize: 22 }} />
-            </Box>
-            <Typography
-              variant="h6"
-              sx={{
-                fontFamily: '"Space Grotesk", sans-serif',
-                fontWeight: 700,
-                letterSpacing: '-0.02em',
-                color: '#171A2B',
-                display: { xs: 'none', sm: 'block' },
-              }}
-            >
-              DSA Tracker
-            </Typography>
+            <Logo size={26} />
           </Stack>
 
           {/* Desktop Nav Items */}
