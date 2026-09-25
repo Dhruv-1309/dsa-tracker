@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, useParams, Link as RouterLink } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useApiClient } from '../api/useApiClient';
 import type { Problem, ProblemRequest } from '../types/problem';
 import type { Topic } from '../types/topic';
 import type { AttemptRequest } from '../types/attempt';
+import type { StatsSummary } from '../types/stats';
 import {
   Container,
   Typography,
@@ -22,14 +23,72 @@ import {
   Stack,
   InputAdornment,
   Divider,
+  Autocomplete,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import SparklesIcon from '@mui/icons-material/AutoAwesome';
 import TimerOutlinedIcon from '@mui/icons-material/TimerOutlined';
 import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined';
+import AddIcon from '@mui/icons-material/Add';
 
-const PLATFORMS = ['LeetCode', 'NeetCode', 'Codeforces', 'HackerRank', 'CodeChef', 'Other'];
+const DEFAULT_PLATFORMS = [
+  'LeetCode',
+  'GeekForGeeks',
+  'NeetCode',
+  'Codeforces',
+  'HackerRank',
+  'CodeChef',
+  'Other',
+];
+
+const CUSTOM_PLATFORMS_KEY = 'dsa_tracker_custom_platforms';
+
+const normalizePlatformKey = (p: string): string => {
+  const clean = p.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (clean === 'geekforgeeks' || clean === 'geeksforgeeks' || clean === 'gfg') {
+    return 'gfg';
+  }
+  return clean;
+};
+
+const getStoredCustomPlatforms = (): string[] => {
+  try {
+    const raw = localStorage.getItem(CUSTOM_PLATFORMS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    // Purge default platforms or duplicate variants (like GeeksforGeeks vs GeekForGeeks) from localStorage
+    const cleaned = parsed.filter(
+      (item: string) =>
+        !DEFAULT_PLATFORMS.some((def) => normalizePlatformKey(def) === normalizePlatformKey(item))
+    );
+    if (cleaned.length !== parsed.length) {
+      localStorage.setItem(CUSTOM_PLATFORMS_KEY, JSON.stringify(cleaned));
+    }
+    return cleaned;
+  } catch {
+    return [];
+  }
+};
+
+const saveCustomPlatformToStorage = (name: string): string[] => {
+  const trimmed = name.trim().slice(0, 50);
+  if (!trimmed) return getStoredCustomPlatforms();
+  try {
+    const existing = getStoredCustomPlatforms();
+    const isDefault = DEFAULT_PLATFORMS.some((p) => normalizePlatformKey(p) === normalizePlatformKey(trimmed));
+    const alreadySaved = existing.some((p) => normalizePlatformKey(p) === normalizePlatformKey(trimmed));
+    if (!isDefault && !alreadySaved) {
+      const updated = [...existing, trimmed];
+      localStorage.setItem(CUSTOM_PLATFORMS_KEY, JSON.stringify(updated));
+      return updated;
+    }
+    return existing;
+  } catch {
+    return getStoredCustomPlatforms();
+  }
+};
 const LANGUAGES = ['Python', 'Java', 'C++', 'TypeScript', 'JavaScript', 'Go', 'Rust'];
 const CONFIDENCE_OPTIONS = [
   { value: 1, label: '1 — Unfamiliar (needed full editorial)' },
@@ -69,6 +128,49 @@ export default function ProblemForm() {
 
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
+
+  // Custom platforms from localStorage
+  const [customPlatforms, setCustomPlatforms] = useState<string[]>(getStoredCustomPlatforms);
+
+  // Fetch summary to include any platforms previously logged in DB
+  const { data: statsSummary } = useQuery<StatsSummary>({
+    queryKey: ['statsSummary'],
+    queryFn: async () => {
+      const res = await fetchApi('/stats/summary');
+      if (!res.ok) return null;
+      return res.json();
+    },
+  });
+
+  const platformOptions = useMemo(() => {
+    const result: string[] = [];
+    const seenKeys = new Set<string>();
+
+    const addOption = (opt: string) => {
+      const trimmed = opt.trim();
+      if (!trimmed) return;
+      const key = normalizePlatformKey(trimmed);
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        result.push(trimmed);
+      }
+    };
+
+    DEFAULT_PLATFORMS.forEach(addOption);
+    customPlatforms.forEach(addOption);
+    if (statsSummary?.platformCounts) {
+      Object.keys(statsSummary.platformCounts).forEach(addOption);
+    }
+    return result;
+  }, [customPlatforms, statsSummary]);
+
+  const handleSavePlatform = (val: string) => {
+    const trimmed = val.trim();
+    if (!trimmed) return;
+    const updated = saveCustomPlatformToStorage(trimmed);
+    setCustomPlatforms(updated);
+    setPlatform(trimmed);
+  };
 
   // Fetch topics
   const { data: topics = [] } = useQuery<Topic[]>({
@@ -126,12 +228,15 @@ export default function ProblemForm() {
 
     setSaving(true);
 
+    const finalPlatform = platform.trim().slice(0, 50) || 'Other';
+    handleSavePlatform(finalPlatform);
+
     try {
       if (isEdit) {
         // Edit mode: update problem metadata
         const updatePayload: ProblemRequest = {
           title: title.trim(),
-          platform,
+          platform: finalPlatform,
           url: url.trim(),
           difficulty,
           primaryTopicId: primaryTopicId || topics[0]?.id || '',
@@ -152,7 +257,7 @@ export default function ProblemForm() {
         // Create mode: create problem, then optionally log initial attempt
         const createPayload: ProblemRequest = {
           title: title.trim(),
-          platform,
+          platform: finalPlatform,
           url: url.trim(),
           difficulty,
           primaryTopicId: primaryTopicId || topics[0]?.id || '',
@@ -296,18 +401,86 @@ export default function ProblemForm() {
                       <Typography variant="caption" sx={{ fontWeight: 600, color: '#334155', mb: 0.75, display: 'block' }}>
                         Platform
                       </Typography>
-                      <FormControl fullWidth size="small">
-                        <Select
-                          value={platform}
-                          onChange={(e) => setPlatform(e.target.value)}
-                        >
-                          {PLATFORMS.map((p) => (
-                            <MenuItem key={p} value={p}>
-                              {p}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
+                      <Autocomplete
+                        freeSolo
+                        selectOnFocus
+                        clearOnBlur={false}
+                        handleHomeEndKeys
+                        options={platformOptions}
+                        value={platform}
+                        onChange={(_e, newValue) => {
+                          if (!newValue) return;
+                          if (typeof newValue === 'string') {
+                            const match = newValue.match(/^Add "(.+)"$/);
+                            const val = match ? match[1] : newValue;
+                            handleSavePlatform(val);
+                          }
+                        }}
+                        onInputChange={(_e, newInputValue, reason) => {
+                          if (reason === 'input') {
+                            setPlatform(newInputValue);
+                          }
+                        }}
+                        filterOptions={(options, params) => {
+                          const inputTrimmed = params.inputValue.trim();
+                          const inputKey = normalizePlatformKey(inputTrimmed);
+                          const filtered = options.filter((opt) => {
+                            if (inputKey === 'gfg' && normalizePlatformKey(opt) === 'gfg') return true;
+                            return opt.toLowerCase().includes(inputTrimmed.toLowerCase());
+                          });
+
+                          const exists = options.some(
+                            (opt) => normalizePlatformKey(opt) === inputKey
+                          );
+
+                          if (inputTrimmed !== '' && !exists) {
+                            filtered.push(`Add "${inputTrimmed}"`);
+                          }
+
+                          return filtered;
+                        }}
+                        renderOption={(props, option) => {
+                          const isAddOption = typeof option === 'string' && option.startsWith('Add "');
+                          const { key, ...otherProps } = props as any;
+                          if (isAddOption) {
+                            return (
+                              <li
+                                key={key}
+                                {...otherProps}
+                                style={{
+                                  color: '#4F3FF0',
+                                  fontWeight: 600,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 6,
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                <AddIcon sx={{ fontSize: 18 }} />
+                                {option}
+                              </li>
+                            );
+                          }
+                          return (
+                            <li key={key} {...otherProps}>
+                              {option}
+                            </li>
+                          );
+                        }}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            size="small"
+                            placeholder="Select or enter platform"
+                          />
+                        )}
+                      />
+                      <Typography
+                        variant="caption"
+                        sx={{ fontSize: '0.72rem', color: '#64748B', display: 'block', mt: 0.5 }}
+                      >
+                        Type any platform name (e.g. GeekForGeeks) to save for future suggestions
+                      </Typography>
                     </Grid>
 
                     <Grid size={{ xs: 12, sm: 7 }}>

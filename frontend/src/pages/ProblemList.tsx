@@ -1,6 +1,6 @@
-import { useState, useMemo, useDeferredValue } from 'react';
+import { useState, useMemo, useDeferredValue, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApiClient } from '../api/useApiClient';
 import type { Problem } from '../types/problem';
 import { sanitizeUrl } from '../utils/security';
@@ -45,10 +45,35 @@ export default function ProblemList() {
   const fetchApi = useApiClient();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [search, setSearch] = useState('');
-  const [topic, setTopic] = useState('');
-  const [status, setStatus] = useState('');
+  const urlSearch = searchParams.get('search') || '';
+  const urlTopic = searchParams.get('topic') || '';
+  const urlStatus = searchParams.get('status') || '';
+  const urlSort = searchParams.get('sort') || 'date_desc';
+
+  const [search, setSearch] = useState(urlSearch);
+  const [topic, setTopic] = useState(urlTopic);
+  const [status, setStatus] = useState(urlStatus);
+  const [sortBy, setSortBy] = useState(urlSort);
+
+  // Sync state if URL search parameters change (e.g. navigation from Topics page or browser back/forward)
+  useEffect(() => {
+    setTopic(searchParams.get('topic') || '');
+    setStatus(searchParams.get('status') || '');
+    setSearch(searchParams.get('search') || '');
+    setSortBy(searchParams.get('sort') || 'date_desc');
+  }, [searchParams]);
+
+  const updateFilterParam = (key: string, value: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (value) {
+      next.set(key, value);
+    } else {
+      next.delete(key);
+    }
+    setSearchParams(next, { replace: true });
+  };
 
   const deferredSearch = useDeferredValue(search);
   const deferredTopic = useDeferredValue(topic);
@@ -68,6 +93,55 @@ export default function ProblemList() {
     },
     placeholderData: (previousData) => previousData,
   });
+
+  const filteredProblems = useMemo(() => {
+    let list = [...problems];
+    if (deferredTopic && deferredTopic.trim()) {
+      const topicLower = deferredTopic.trim().toLowerCase();
+      list = list.filter((p) => {
+        const primaryMatch = p.primaryTopicName?.toLowerCase() === topicLower ||
+                             p.primaryTopicName?.toLowerCase().includes(topicLower);
+        const extraMatch = p.extraTopicNames?.some((t) =>
+          t.toLowerCase() === topicLower || t.toLowerCase().includes(topicLower)
+        );
+        return primaryMatch || extraMatch;
+      });
+    }
+    if (deferredSearch && deferredSearch.trim()) {
+      const searchLower = deferredSearch.trim().toLowerCase();
+      list = list.filter((p) =>
+        p.title?.toLowerCase().includes(searchLower) ||
+        p.platform?.toLowerCase().includes(searchLower)
+      );
+    }
+    if (status) {
+      list = list.filter((p) => p.currentStatus === status);
+    }
+    return list;
+  }, [problems, deferredTopic, deferredSearch, status]);
+
+  const sortedProblems = useMemo(() => {
+    const list = [...filteredProblems];
+    list.sort((a, b) => {
+      const timeA = new Date(a.lastSuccessfulAt || a.createdAt).getTime();
+      const timeB = new Date(b.lastSuccessfulAt || b.createdAt).getTime();
+
+      if (sortBy === 'date_asc') {
+        return timeA - timeB;
+      }
+      if (sortBy === 'title_asc') {
+        return a.title.localeCompare(b.title);
+      }
+      if (sortBy === 'difficulty') {
+        const diffWeight: Record<string, number> = { HARD: 3, MEDIUM: 2, EASY: 1 };
+        return (diffWeight[b.difficulty] || 0) - (diffWeight[a.difficulty] || 0);
+      }
+      // Default: date_desc (newest first)
+      if (timeB !== timeA) return timeB - timeA;
+      return a.title.localeCompare(b.title);
+    });
+    return list;
+  }, [filteredProblems, sortBy]);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -160,18 +234,20 @@ export default function ProblemList() {
     );
   };
 
-  const hasActiveFilters = Boolean(search || topic || status);
+  const hasActiveFilters = Boolean(search || topic || status || sortBy !== 'date_desc');
 
   const resetFilters = () => {
     setSearch('');
     setTopic('');
     setStatus('');
+    setSortBy('date_desc');
+    setSearchParams({}, { replace: true });
   };
 
   // Quick summary counts
   const solvedCount = useMemo(() => {
-    return problems.filter((p) => p.currentStatus === 'Solved' || p.currentStatus === 'Solved optimally').length;
-  }, [problems]);
+    return sortedProblems.filter((p) => p.currentStatus === 'Solved' || p.currentStatus === 'Solved optimally').length;
+  }, [sortedProblems]);
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -205,7 +281,7 @@ export default function ProblemList() {
               Manage your logged algorithmic challenges and review intervals.
             </Typography>
             <Chip
-              label={`${problems.length} total`}
+              label={`${sortedProblems.length} total`}
               size="small"
               sx={{ backgroundColor: '#F1F5F9', fontWeight: 600, color: '#475569' }}
             />
@@ -252,7 +328,10 @@ export default function ProblemList() {
           <TextField
             placeholder="Search problems by name or keyword..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              updateFilterParam('search', e.target.value);
+            }}
             size="small"
             fullWidth
             slotProps={{
@@ -264,7 +343,13 @@ export default function ProblemList() {
                 ),
                 endAdornment: search ? (
                   <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => setSearch('')}>
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        setSearch('');
+                        updateFilterParam('search', '');
+                      }}
+                    >
                       <ClearIcon sx={{ fontSize: 16 }} />
                     </IconButton>
                   </InputAdornment>
@@ -276,7 +361,10 @@ export default function ProblemList() {
           <TextField
             placeholder="Filter by topic (e.g. DP)"
             value={topic}
-            onChange={(e) => setTopic(e.target.value)}
+            onChange={(e) => {
+              setTopic(e.target.value);
+              updateFilterParam('topic', e.target.value);
+            }}
             size="small"
             sx={{ width: { xs: '100%', md: 220 } }}
             slotProps={{
@@ -286,17 +374,33 @@ export default function ProblemList() {
                     <FilterListIcon sx={{ color: '#94A3B8', fontSize: 18 }} />
                   </InputAdornment>
                 ),
+                endAdornment: topic ? (
+                  <InputAdornment position="end">
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        setTopic('');
+                        updateFilterParam('topic', '');
+                      }}
+                    >
+                      <ClearIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  </InputAdornment>
+                ) : null,
               },
             }}
           />
 
-          <FormControl size="small" sx={{ width: { xs: '100%', md: 200 } }}>
+          <FormControl size="small" sx={{ width: { xs: '100%', md: 190 } }}>
             <InputLabel id="status-label">Status</InputLabel>
             <Select
               labelId="status-label"
               value={status}
               label="Status"
-              onChange={(e) => setStatus(e.target.value)}
+              onChange={(e) => {
+                setStatus(e.target.value);
+                updateFilterParam('status', e.target.value);
+              }}
             >
               <MenuItem value="">
                 <em>All Statuses</em>
@@ -309,18 +413,108 @@ export default function ProblemList() {
             </Select>
           </FormControl>
 
-          {hasActiveFilters && (
+          <FormControl size="small" sx={{ width: { xs: '100%', md: 210 } }}>
+            <InputLabel id="sort-label">Sort By</InputLabel>
+            <Select
+              labelId="sort-label"
+              value={sortBy}
+              label="Sort By"
+              onChange={(e) => {
+                const val = e.target.value;
+                setSortBy(val);
+                updateFilterParam('sort', val === 'date_desc' ? '' : val);
+              }}
+            >
+              <MenuItem value="date_desc">Date (Newest first)</MenuItem>
+              <MenuItem value="date_asc">Date (Oldest first)</MenuItem>
+              <MenuItem value="title_asc">Title (A to Z)</MenuItem>
+              <MenuItem value="difficulty">Difficulty (Hard to Easy)</MenuItem>
+            </Select>
+          </FormControl>
+        </Stack>
+
+        {hasActiveFilters && (
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{
+              mt: 2,
+              pt: 1.5,
+              borderTop: '1px solid #F1F5F9',
+              flexWrap: 'wrap',
+              gap: 1,
+              alignItems: 'center',
+            }}
+          >
+            <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>
+              Active Filters:
+            </Typography>
+            {topic && (
+              <Chip
+                label={`Topic: ${topic}`}
+                size="small"
+                onDelete={() => {
+                  setTopic('');
+                  updateFilterParam('topic', '');
+                }}
+                sx={{
+                  backgroundColor: '#EEEBFF',
+                  color: '#4F3FF0',
+                  fontWeight: 600,
+                  '& .MuiChip-deleteIcon': { color: '#7062F8' },
+                }}
+              />
+            )}
+            {status && (
+              <Chip
+                label={`Status: ${status}`}
+                size="small"
+                onDelete={() => {
+                  setStatus('');
+                  updateFilterParam('status', '');
+                }}
+                sx={{ fontWeight: 600 }}
+              />
+            )}
+            {search && (
+              <Chip
+                label={`Search: "${search}"`}
+                size="small"
+                onDelete={() => {
+                  setSearch('');
+                  updateFilterParam('search', '');
+                }}
+                sx={{ fontWeight: 600 }}
+              />
+            )}
+            {sortBy !== 'date_desc' && (
+              <Chip
+                label={`Sort: ${
+                  sortBy === 'date_asc'
+                    ? 'Oldest first'
+                    : sortBy === 'title_asc'
+                    ? 'A-Z'
+                    : 'Difficulty'
+                }`}
+                size="small"
+                onDelete={() => {
+                  setSortBy('date_desc');
+                  updateFilterParam('sort', '');
+                }}
+                sx={{ fontWeight: 600 }}
+              />
+            )}
             <Button
               variant="text"
               color="inherit"
               size="small"
               onClick={resetFilters}
-              sx={{ whiteSpace: 'nowrap', color: '#64748B' }}
+              sx={{ whiteSpace: 'nowrap', color: '#64748B', fontSize: '0.75rem', p: 0.5 }}
             >
-              Reset Filters
+              Reset All
             </Button>
-          )}
-        </Stack>
+          </Stack>
+        )}
       </Paper>
 
       {/* Table Content */}
@@ -335,7 +529,7 @@ export default function ProblemList() {
         <Alert severity="error" sx={{ borderRadius: 2 }}>
           Error loading problems. Please refresh the page.
         </Alert>
-      ) : problems.length === 0 ? (
+      ) : sortedProblems.length === 0 ? (
         <Paper
           elevation={0}
           sx={{
@@ -406,12 +600,13 @@ export default function ProblemList() {
                 <TableCell>Topic</TableCell>
                 <TableCell>Difficulty</TableCell>
                 <TableCell>Status</TableCell>
+                <TableCell>Date</TableCell>
                 <TableCell>Next Revisit</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {problems.map((p) => (
+              {sortedProblems.map((p) => (
                 <TableRow
                   key={p.id}
                   hover
@@ -482,6 +677,34 @@ export default function ProblemList() {
 
                   {/* Status */}
                   <TableCell>{getStatusChip(p.currentStatus)}</TableCell>
+
+                  {/* Date (Solved or Logged) */}
+                  <TableCell>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontFamily: '"IBM Plex Mono", monospace',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        color: p.lastSuccessfulAt ? '#047857' : '#475569',
+                      }}
+                    >
+                      {p.lastSuccessfulAt
+                        ? new Date(p.lastSuccessfulAt).toLocaleDateString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })
+                        : new Date(p.createdAt).toLocaleDateString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: '#94A3B8', display: 'block', fontSize: '0.7rem' }}>
+                      {p.lastSuccessfulAt ? 'Solved' : 'Logged'}
+                    </Typography>
+                  </TableCell>
 
                   {/* Next Revisit */}
                   <TableCell>
