@@ -2,6 +2,7 @@ package com.example.demo.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -9,7 +10,11 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "topics")
+@Table(name = "topics", indexes = {
+        @Index(name = "idx_topics_user_system", columnList = "user_id, is_system"),
+        @Index(name = "idx_topics_sort_order", columnList = "sort_order, name")
+})
+@BatchSize(size = 100)
 @Data
 @Builder
 @NoArgsConstructor

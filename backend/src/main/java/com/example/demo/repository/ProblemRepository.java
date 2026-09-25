@@ -1,6 +1,9 @@
 package com.example.demo.repository;
 
 import com.example.demo.model.Problem;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -13,8 +16,18 @@ import java.util.UUID;
 
 @Repository
 public interface ProblemRepository extends JpaRepository<Problem, UUID>, JpaSpecificationExecutor<Problem> {
-    List<Problem> findByUserId(UUID userId);
+
+    @Override
+    @EntityGraph(attributePaths = {"primaryTopic"})
+    List<Problem> findAll(Specification<Problem> spec, Sort sort);
+
+    @EntityGraph(attributePaths = {"primaryTopic"})
     Optional<Problem> findByIdAndUserId(UUID id, UUID userId);
+
+    @Query("SELECT DISTINCT p FROM Problem p LEFT JOIN FETCH p.primaryTopic LEFT JOIN FETCH p.extraTopics WHERE p.user.id = :userId")
+    List<Problem> findByUserIdWithTopics(@Param("userId") UUID userId);
+
+    List<Problem> findByUserId(UUID userId);
     void deleteByIdAndUserId(UUID id, UUID userId);
     void deleteByUserId(UUID userId);
     long countByUserId(UUID userId);

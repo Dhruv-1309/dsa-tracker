@@ -28,6 +28,7 @@ public class RevisitQueueService {
         LocalDate today = LocalDate.now();
 
         Specification<Problem> spec = (root, query, cb) -> {
+            query.distinct(true);
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(cb.equal(root.get("user").get("id"), userId));
 

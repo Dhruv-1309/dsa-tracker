@@ -2,6 +2,7 @@ package com.example.demo.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.OnDelete;
@@ -13,7 +14,13 @@ import java.util.Set;
 import java.util.UUID;
 
 @Entity
-@Table(name = "attempts")
+@Table(name = "attempts", indexes = {
+        @Index(name = "idx_attempts_user_id", columnList = "user_id"),
+        @Index(name = "idx_attempts_problem_id", columnList = "problem_id"),
+        @Index(name = "idx_attempts_user_problem", columnList = "user_id, problem_id"),
+        @Index(name = "idx_attempts_user_attempted_at", columnList = "user_id, attempted_at")
+})
+@BatchSize(size = 100)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -77,6 +84,7 @@ public class Attempt {
             joinColumns = @JoinColumn(name = "attempt_id"),
             inverseJoinColumns = @JoinColumn(name = "mistake_tag_id")
     )
+    @BatchSize(size = 100)
     @Builder.Default
     private Set<MistakeTag> mistakeTags = new HashSet<>();
 

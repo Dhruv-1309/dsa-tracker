@@ -1,6 +1,7 @@
 package com.example.demo.repository;
 
 import com.example.demo.model.Attempt;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,6 +12,7 @@ import java.util.UUID;
 
 @Repository
 public interface AttemptRepository extends JpaRepository<Attempt, UUID> {
+    @EntityGraph(attributePaths = {"mistakeTags"})
     List<Attempt> findByProblemIdAndUserIdOrderByAttemptedAtDesc(UUID problemId, UUID userId);
     List<Attempt> findByUserId(UUID userId);
     void deleteByUserId(UUID userId);

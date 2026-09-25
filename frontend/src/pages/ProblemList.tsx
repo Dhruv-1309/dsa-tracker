@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useDeferredValue } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useApiClient } from '../api/useApiClient';
@@ -24,6 +24,7 @@ import {
   Chip,
   Link,
   CircularProgress,
+  LinearProgress,
   Alert,
   Stack,
   InputAdornment,
@@ -49,19 +50,23 @@ export default function ProblemList() {
   const [topic, setTopic] = useState('');
   const [status, setStatus] = useState('');
 
+  const deferredSearch = useDeferredValue(search);
+  const deferredTopic = useDeferredValue(topic);
+
   const queryParams = new URLSearchParams();
-  if (search) queryParams.append('search', search);
-  if (topic) queryParams.append('topic', topic);
+  if (deferredSearch) queryParams.append('search', deferredSearch);
+  if (deferredTopic) queryParams.append('topic', deferredTopic);
   if (status) queryParams.append('status', status);
   queryParams.append('sort', 'createdAt,desc');
 
-  const { data: problems = [], isLoading, error } = useQuery<Problem[]>({
-    queryKey: ['problems', search, topic, status],
+  const { data: problems = [], isLoading, isFetching, error } = useQuery<Problem[]>({
+    queryKey: ['problems', deferredSearch, deferredTopic, status],
     queryFn: async () => {
       const res = await fetchApi(`/problems?${queryParams.toString()}`);
       if (!res.ok) throw new Error('Failed to fetch problems');
       return res.json();
     },
+    placeholderData: (previousData) => previousData,
   });
 
   const deleteMutation = useMutation({
@@ -377,8 +382,23 @@ export default function ProblemList() {
             borderRadius: 3,
             border: '1px solid #E3E6EF',
             overflow: 'hidden',
+            position: 'relative',
           }}
         >
+          {isFetching && !isLoading && (
+            <LinearProgress
+              sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 3,
+                zIndex: 2,
+                backgroundColor: 'transparent',
+                '& .MuiLinearProgress-bar': { backgroundColor: '#4F3FF0' },
+              }}
+            />
+          )}
           <Table sx={{ minWidth: 720 }}>
             <TableHead>
               <TableRow>

@@ -1,5 +1,9 @@
 server:
   port: ${PORT:8080}
+  compression:
+    enabled: true
+    mime-types: application/json,text/html,text/xml,text/plain,text/css,application/javascript
+    min-response-size: 1024
 
 spring:
   application:
@@ -26,7 +30,9 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_batch_fetch_size: 100
         jdbc:
+          batch_size: 50
           lob:
             non_contextual_creation: true
 

@@ -34,6 +34,7 @@ public class ProblemService {
     @Transactional(readOnly = true)
     public List<ProblemResponse> getProblems(UUID userId, String search, String topic, String status, Sort sort) {
         Specification<Problem> spec = (root, query, cb) -> {
+            query.distinct(true);
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(cb.equal(root.get("user").get("id"), userId));
 
@@ -43,7 +44,7 @@ public class ProblemService {
             if (topic != null && !topic.trim().isEmpty()) {
                 // Check if primary topic name matches OR any extra topic matches
                 Predicate primaryMatch = cb.equal(root.get("primaryTopic").get("name"), topic);
-                Predicate extraMatch = cb.equal(root.join("extraTopics").get("name"), topic);
+                Predicate extraMatch = cb.equal(root.join("extraTopics", jakarta.persistence.criteria.JoinType.LEFT).get("name"), topic);
                 predicates.add(cb.or(primaryMatch, extraMatch));
             }
             if (status != null && !status.trim().isEmpty()) {

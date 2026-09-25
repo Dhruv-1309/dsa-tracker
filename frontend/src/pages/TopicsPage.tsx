@@ -30,6 +30,7 @@ export default function TopicsPage() {
       if (!res.ok) throw new Error('Failed to load topic progress');
       return res.json();
     },
+    placeholderData: (previousData) => previousData,
   });
 
   return (
