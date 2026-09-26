@@ -173,13 +173,14 @@ export default function ProblemForm() {
   };
 
   // Fetch topics
-  const { data: topics = [] } = useQuery<Topic[]>({
+  const { data: topics = [], isLoading: isTopicsLoading, isError: isTopicsError } = useQuery<Topic[]>({
     queryKey: ['topics'],
     queryFn: async () => {
       const res = await fetchApi('/topics');
       if (!res.ok) throw new Error('Failed to fetch topics');
       return res.json();
     },
+    retry: 2,
   });
 
   // Fetch problem details if edit mode
@@ -518,18 +519,40 @@ export default function ProblemForm() {
                       <Typography variant="caption" sx={{ fontWeight: 600, color: '#334155', mb: 0.75, display: 'block' }}>
                         Primary Topic *
                       </Typography>
-                      <FormControl fullWidth size="small">
-                        <Select
-                          value={primaryTopicId || (topics[0]?.id ?? '')}
-                          onChange={(e) => setPrimaryTopicId(e.target.value)}
-                        >
-                          {topics.map((t) => (
-                            <MenuItem key={t.id} value={t.id}>
-                              {t.name}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
+                      {isTopicsError ? (
+                        <Alert severity="error" sx={{ borderRadius: 2, py: 0.5, fontSize: '0.8rem' }}>
+                          Failed to load topics. Please refresh.
+                        </Alert>
+                      ) : (
+                        <FormControl fullWidth size="small" disabled={isTopicsLoading}>
+                          <Select
+                            value={isTopicsLoading ? '' : (primaryTopicId || (topics[0]?.id ?? ''))}
+                            onChange={(e) => setPrimaryTopicId(e.target.value)}
+                            displayEmpty
+                            renderValue={(selected) => {
+                              if (isTopicsLoading) return 'Loading topics…';
+                              if (!selected && topics.length === 0) return 'No topics available';
+                              return topics.find((t) => t.id === selected)?.name ?? 'Select a topic';
+                            }}
+                          >
+                            {isTopicsLoading ? (
+                              <MenuItem disabled>
+                                <CircularProgress size={16} sx={{ mr: 1 }} /> Loading…
+                              </MenuItem>
+                            ) : topics.length === 0 ? (
+                              <MenuItem disabled sx={{ color: '#94A3B8', fontStyle: 'italic', fontSize: '0.85rem' }}>
+                                No topics found — contact support.
+                              </MenuItem>
+                            ) : (
+                              topics.map((t) => (
+                                <MenuItem key={t.id} value={t.id}>
+                                  {t.name}
+                                </MenuItem>
+                              ))
+                            )}
+                          </Select>
+                        </FormControl>
+                      )}
                     </Grid>
                   </Grid>
 
