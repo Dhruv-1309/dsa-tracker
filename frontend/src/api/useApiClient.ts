@@ -2,6 +2,8 @@ import { useAuth } from '../context/AuthContext';
 import { useCallback } from 'react';
 import { API_BASE_URL } from './config';
 
+const REQUEST_TIMEOUT_MS = 30_000; // 30 seconds — handles Render cold-start delays
+
 export function useApiClient() {
     const { token, logout } = useAuth();
 
@@ -16,16 +18,26 @@ export function useApiClient() {
             headers.set('Content-Type', 'application/json');
         }
 
-        const response = await fetch(`${API_BASE_URL}/api${endpoint}`, {
-            ...options,
-            headers,
-        });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-        if (response.status === 401 || response.status === 403) {
-            logout();
+        try {
+            const response = await fetch(`${API_BASE_URL}/api${endpoint}`, {
+                ...options,
+                headers,
+                signal: controller.signal,
+            });
+
+            // Only force-logout if we actually sent a token and the server says it's invalid.
+            // Do NOT logout on network errors or timeouts.
+            if ((response.status === 401 || response.status === 403) && token) {
+                logout();
+            }
+
+            return response;
+        } finally {
+            clearTimeout(timeoutId);
         }
-
-        return response;
     }, [token, logout]);
 
     return fetchApi;

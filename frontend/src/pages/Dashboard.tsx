@@ -40,13 +40,14 @@ export default function Dashboard() {
   const fetchApi = useApiClient();
   const navigate = useNavigate();
 
-  const { data, isLoading } = useQuery<StatsSummary>({
+  const { data, isLoading, isError, refetch } = useQuery<StatsSummary>({
     queryKey: ['dashboard'],
     queryFn: async () => {
       const res = await fetchApi('/stats/summary');
       if (!res.ok) throw new Error('Failed to fetch dashboard');
       return res.json();
     },
+    retry: 1,
   });
 
   const { data: overdue = [] } = useQuery<Problem[]>({
@@ -135,11 +136,30 @@ export default function Dashboard() {
         </Stack>
       </Box>
 
-      {isLoading ? (
+      {isError ? (
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 12, gap: 2 }}>
+          <Typography variant="h6" sx={{ color: '#DC2626', fontWeight: 700 }}>
+            Couldn't reach the server
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', maxWidth: 380 }}>
+            The backend may be waking up from sleep (Render free tier). Wait a few seconds and try again.
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={() => refetch()}
+            sx={{ borderRadius: 2.5, fontWeight: 600, mt: 1 }}
+          >
+            Retry
+          </Button>
+        </Box>
+      ) : isLoading ? (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 12 }}>
           <CircularProgress size={40} sx={{ color: '#4F3FF0', mb: 2 }} />
           <Typography variant="body2" color="text.secondary">
             Gathering practice analytics...
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, opacity: 0.6 }}>
+            Backend may be waking up — this can take ~30s on first load
           </Typography>
         </Box>
       ) : (
