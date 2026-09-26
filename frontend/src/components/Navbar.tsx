@@ -31,6 +31,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import TagIcon from '@mui/icons-material/Tag';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
 export default function Navbar() {
   const location = useLocation();
@@ -151,6 +152,7 @@ export default function Navbar() {
 
             <IconButton
               onClick={handleMenuOpen}
+              aria-label="account menu"
               sx={{
                 p: 1,
                 border: '1px solid #E3E6EF',
@@ -200,16 +202,29 @@ export default function Navbar() {
                   }}
                 >
                   <ListItemIcon>
-                    <AddIcon sx={{ color: '#4F3FF0' }} />
+                    <AddIcon sx={{ color: 'primary.main' }} />
                   </ListItemIcon>
                   <ListItemText primary="Log Problem" />
                 </MenuItem>
                 <Divider sx={{ my: 1 }} />
               </Box>
 
-              <MenuItem onClick={handleLogout} sx={{ color: '#475569' }}>
+              <MenuItem
+                onClick={() => {
+                  handleMenuClose();
+                  navigate('/settings');
+                }}
+                sx={{ color: 'text.primary' }}
+              >
                 <ListItemIcon>
-                  <LogoutIcon sx={{ color: '#475569', fontSize: 20 }} />
+                  <SettingsOutlinedIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
+                </ListItemIcon>
+                <ListItemText primary="Settings" />
+              </MenuItem>
+
+              <MenuItem onClick={handleLogout} sx={{ color: 'text.secondary' }}>
+                <ListItemIcon>
+                  <LogoutIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
                 </ListItemIcon>
                 <ListItemText primary="Sign Out" />
               </MenuItem>
@@ -249,7 +264,7 @@ export default function Navbar() {
           Delete Account & All Data?
         </DialogTitle>
         <DialogContent>
-          <DialogContentText sx={{ color: '#475569', fontSize: '0.925rem' }}>
+          <DialogContentText sx={{ color: 'text.secondary', fontSize: '0.925rem' }}>
             This will permanently delete your account, your problem records, attempt history, and revision schedule. This action is irreversible and compliant with complete data removal.
           </DialogContentText>
         </DialogContent>
