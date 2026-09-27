@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useApiClient } from '../api/useApiClient';
@@ -14,11 +15,11 @@ import {
   Button,
   Grid,
   Paper,
-  Chip,
   CircularProgress,
   Stack,
   LinearProgress,
   Tooltip,
+  Divider,
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AssignmentIcon from '@mui/icons-material/Assignment';
@@ -34,6 +35,19 @@ const STATUS_COLORS: Record<string, string> = {
   'Could not solve': '#8B7FF5',
   'Solved': '#4F3FF0',
   'Solved optimally': '#10B981',
+};
+
+const canonicalPlatformName = (name: string): string => {
+  const clean = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (clean === 'geekforgeeks' || clean === 'geeksforgeeks' || clean === 'gfg') {
+    return 'GeeksforGeeks';
+  }
+  if (clean === 'leetcode') return 'LeetCode';
+  if (clean === 'codeforces') return 'Codeforces';
+  if (clean === 'hackerrank') return 'HackerRank';
+  if (clean === 'codechef') return 'CodeChef';
+  if (clean === 'neetcode') return 'NeetCode';
+  return name.trim();
 };
 
 export default function Dashboard() {
@@ -84,6 +98,17 @@ export default function Dashboard() {
 
   const platformCounts = data?.platformCounts || {};
 
+  const normalizedPlatformCounts = useMemo(() => {
+    const aggregated: Record<string, number> = {};
+    Object.entries(platformCounts).forEach(([name, count]) => {
+      const canonical = canonicalPlatformName(name);
+      aggregated[canonical] = (aggregated[canonical] || 0) + count;
+    });
+    return aggregated;
+  }, [platformCounts]);
+
+  const queueCount = overdue.length + due.length;
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* Top Banner / Greeting with Motion Primitive TextEffect */}
@@ -92,12 +117,12 @@ export default function Dashboard() {
           display: 'flex',
           flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: 'space-between',
-          alignItems: { xs: 'flex-start', sm: 'center' },
+          alignItems: { xs: 'flex-start', sm: 'flex-start' },
           mb: 4,
-          gap: 2,
+          gap: 2.5,
         }}
       >
-        <div>
+        <Box sx={{ maxWidth: 640 }}>
           <Typography
             variant="h4"
             component="h1"
@@ -107,6 +132,7 @@ export default function Dashboard() {
               color: '#171A2B',
               letterSpacing: '-0.02em',
               mb: 0.5,
+              lineHeight: 1.2,
             }}
           >
             <TextEffect per="word">{greeting}</TextEffect> 👋
@@ -114,26 +140,30 @@ export default function Dashboard() {
           <Typography variant="body2" color="text.secondary">
             Here is your daily algorithmic practice summary and retention status.
           </Typography>
-        </div>
+        </Box>
 
-        <Stack direction="row" spacing={1.5}>
+        <Box sx={{ pt: { xs: 0, sm: 0.5 }, flexShrink: 0 }}>
           <Button
             component={RouterLink}
             to="/queue"
             variant="outlined"
-            sx={{ borderRadius: 2.5, fontWeight: 600 }}
+            sx={{
+              borderRadius: 1.5,
+              fontWeight: 600,
+              py: 0.9,
+              px: 2.2,
+              borderColor: queueCount > 0 ? '#D97706' : '#E3E6EF',
+              color: queueCount > 0 ? '#B45309' : '#4F3FF0',
+              backgroundColor: queueCount > 0 ? '#FFFBEB' : '#FFFFFF',
+              '&:hover': {
+                borderColor: queueCount > 0 ? '#B45309' : '#4F3FF0',
+                backgroundColor: queueCount > 0 ? '#FEF3C7' : '#F8FAFC',
+              },
+            }}
           >
-            Open Queue ({overdue.length + due.length})
+            Open Queue ({queueCount})
           </Button>
-          <Button
-            component={RouterLink}
-            to="/problems/new"
-            variant="contained"
-            sx={{ borderRadius: 2.5, fontWeight: 600 }}
-          >
-            + Log Problem
-          </Button>
-        </Stack>
+        </Box>
       </Box>
 
       {isError ? (
@@ -173,7 +203,7 @@ export default function Dashboard() {
                   elevation={0}
                   sx={{
                     p: 3,
-                    borderRadius: 3,
+                    borderRadius: 2,
                     border: '1px solid #E3E6EF',
                     display: 'flex',
                     alignItems: 'center',
@@ -187,9 +217,9 @@ export default function Dashboard() {
                 >
                   <Box
                     sx={{
-                      width: 52,
-                      height: 52,
-                      borderRadius: 2.5,
+                      width: 50,
+                      height: 50,
+                      borderRadius: 1.5,
                       backgroundColor: '#EEEBFF',
                       color: '#4F3FF0',
                       display: 'flex',
@@ -197,14 +227,15 @@ export default function Dashboard() {
                       justifyContent: 'center',
                     }}
                   >
-                    <AssignmentIcon sx={{ fontSize: 28 }} />
+                    <AssignmentIcon sx={{ fontSize: 26 }} />
                   </Box>
                   <div>
-                    <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>
-                      Tracked Problems
+                    <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>
+                      Tracked problems
                     </Typography>
                     <Typography
                       variant="h4"
+                      component="div"
                       sx={{
                         fontFamily: '"IBM Plex Mono", monospace',
                         fontWeight: 700,
@@ -225,7 +256,7 @@ export default function Dashboard() {
                   elevation={0}
                   sx={{
                     p: 3,
-                    borderRadius: 3,
+                    borderRadius: 2,
                     border: '1px solid #E3E6EF',
                     display: 'flex',
                     alignItems: 'center',
@@ -239,9 +270,9 @@ export default function Dashboard() {
                 >
                   <Box
                     sx={{
-                      width: 52,
-                      height: 52,
-                      borderRadius: 2.5,
+                      width: 50,
+                      height: 50,
+                      borderRadius: 1.5,
                       backgroundColor: '#DEF7EC',
                       color: '#0E9F6E',
                       display: 'flex',
@@ -249,14 +280,15 @@ export default function Dashboard() {
                       justifyContent: 'center',
                     }}
                   >
-                    <CheckCircleIcon sx={{ fontSize: 28 }} />
+                    <CheckCircleIcon sx={{ fontSize: 26 }} />
                   </Box>
                   <div>
-                    <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>
-                      Solved Optimally
+                    <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>
+                      Solved optimally
                     </Typography>
                     <Typography
                       variant="h4"
+                      component="div"
                       sx={{
                         fontFamily: '"IBM Plex Mono", monospace',
                         fontWeight: 700,
@@ -277,7 +309,7 @@ export default function Dashboard() {
                   elevation={0}
                   sx={{
                     p: 3,
-                    borderRadius: 3,
+                    borderRadius: 2,
                     border: '1px solid #E3E6EF',
                     display: 'flex',
                     alignItems: 'center',
@@ -291,9 +323,9 @@ export default function Dashboard() {
                 >
                   <Box
                     sx={{
-                      width: 52,
-                      height: 52,
-                      borderRadius: 2.5,
+                      width: 50,
+                      height: 50,
+                      borderRadius: 1.5,
                       backgroundColor: overdue.length > 0 ? '#FDECEC' : '#FEF3C7',
                       color: overdue.length > 0 ? '#DC2626' : '#D97706',
                       display: 'flex',
@@ -301,14 +333,15 @@ export default function Dashboard() {
                       justifyContent: 'center',
                     }}
                   >
-                    <WarningAmberIcon sx={{ fontSize: 28 }} />
+                    <WarningAmberIcon sx={{ fontSize: 26 }} />
                   </Box>
                   <div>
-                    <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>
-                      Revisit Needed
+                    <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>
+                      Revisit needed
                     </Typography>
                     <Typography
                       variant="h4"
+                      component="div"
                       sx={{
                         fontFamily: '"IBM Plex Mono", monospace',
                         fontWeight: 700,
@@ -327,9 +360,13 @@ export default function Dashboard() {
 
           {/* Progress Breakdown Card */}
           <InView delay={0.2}>
-            <Paper elevation={0} sx={{ p: 3.5, borderRadius: 3, border: '1px solid #E3E6EF' }}>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: 2, border: '1px solid #E3E6EF' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6" sx={{ fontFamily: '"Space Grotesk", sans-serif', fontWeight: 700 }}>
+                <Typography
+                  variant="h6"
+                  component="h2"
+                  sx={{ fontFamily: '"Space Grotesk", sans-serif', fontWeight: 700 }}
+                >
                   Practice Outcome Distribution
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -340,12 +377,12 @@ export default function Dashboard() {
               {/* Multi-segmented status bar */}
               <Box
                 sx={{
-                  height: 14,
-                  borderRadius: 7,
+                  height: 12,
+                  borderRadius: 9999,
                   overflow: 'hidden',
                   display: 'flex',
                   backgroundColor: '#F1F5F9',
-                  mb: 3,
+                  mb: 2.5,
                 }}
               >
                 {STATUS_ORDER.map((st) => {
@@ -389,12 +426,35 @@ export default function Dashboard() {
 
           {/* Two-Column Detail Grid */}
           <InView delay={0.3}>
-            <Grid container spacing={3}>
+            <Grid container spacing={3} sx={{ alignItems: 'stretch' }}>
               {/* Revisit Due Widget */}
-              <Grid size={{ xs: 12, md: 7 }}>
-                <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid #E3E6EF', height: '100%' }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h6" sx={{ fontFamily: '"Space Grotesk", sans-serif', fontWeight: 700 }}>
+              <Grid size={{ xs: 12, md: 7 }} sx={{ display: 'flex', flexDirection: 'column' }}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 3,
+                    borderRadius: 2,
+                    border: '1px solid #E3E6EF',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    flex: 1,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      minHeight: 36,
+                      mb: 2,
+                    }}
+                  >
+                    <Typography
+                      variant="h6"
+                      component="h2"
+                      sx={{ fontFamily: '"Space Grotesk", sans-serif', fontWeight: 700 }}
+                    >
                       Due for Revisit
                     </Typography>
                     <Button
@@ -402,14 +462,14 @@ export default function Dashboard() {
                       to="/queue"
                       size="small"
                       endIcon={<ArrowForwardIcon />}
-                      sx={{ fontWeight: 600, color: '#4F3FF0' }}
+                      sx={{ fontWeight: 600, color: '#4F3FF0', p: 0, minWidth: 0, '&:hover': { background: 'transparent' } }}
                     >
                       View All
                     </Button>
                   </Box>
 
                   {revisitRows.length === 0 ? (
-                    <Box sx={{ py: 6, textAlign: 'center' }}>
+                    <Box sx={{ py: 6, textAlign: 'center', my: 'auto' }}>
                       <AutoAwesomeIcon sx={{ fontSize: 32, color: '#10B981', mb: 1 }} />
                       <Typography variant="body2" color="text.secondary">
                         No problems are currently overdue for review!
@@ -424,7 +484,7 @@ export default function Dashboard() {
                             key={p.id}
                             sx={{
                               p: 2,
-                              borderRadius: 2,
+                              borderRadius: 1.5,
                               border: '1px solid #F1F5F9',
                               backgroundColor: '#FAFBFC',
                               display: 'flex',
@@ -459,7 +519,7 @@ export default function Dashboard() {
                               sx={{
                                 px: 1.5,
                                 py: 0.5,
-                                borderRadius: 2,
+                                borderRadius: 1.5,
                                 fontWeight: 600,
                                 fontSize: '0.75rem',
                                 whiteSpace: 'nowrap',
@@ -476,16 +536,38 @@ export default function Dashboard() {
               </Grid>
 
               {/* Breakdown by Difficulty & Platform */}
-              <Grid size={{ xs: 12, md: 5 }}>
-                <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid #E3E6EF', height: '100%' }}>
-                  <Typography
-                    variant="h6"
-                    sx={{ fontFamily: '"Space Grotesk", sans-serif', fontWeight: 700, mb: 2 }}
+              <Grid size={{ xs: 12, md: 5 }} sx={{ display: 'flex', flexDirection: 'column' }}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 3,
+                    borderRadius: 2,
+                    border: '1px solid #E3E6EF',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    flex: 1,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      minHeight: 36,
+                      mb: 2,
+                    }}
                   >
-                    By Difficulty
-                  </Typography>
+                    <Typography
+                      variant="h6"
+                      component="h2"
+                      sx={{ fontFamily: '"Space Grotesk", sans-serif', fontWeight: 700 }}
+                    >
+                      By Difficulty
+                    </Typography>
+                  </Box>
 
-                  <Stack spacing={2} sx={{ mb: 3 }}>
+                  <Stack spacing={2} sx={{ mb: 2 }}>
                     {sortedDiffs.map(([diff, count]) => {
                       const pct = Math.round((count / maxDiff) * 100);
                       const color =
@@ -508,11 +590,11 @@ export default function Dashboard() {
                             value={pct}
                             sx={{
                               height: 6,
-                              borderRadius: 3,
+                              borderRadius: 9999,
                               backgroundColor: '#F1F5F9',
                               '& .MuiLinearProgress-bar': {
                                 backgroundColor: color,
-                                borderRadius: 3,
+                                borderRadius: 9999,
                               },
                             }}
                           />
@@ -521,30 +603,60 @@ export default function Dashboard() {
                     })}
                   </Stack>
 
-                  {Object.keys(platformCounts).length > 0 && (
-                    <>
+                  {Object.keys(normalizedPlatformCounts).length > 0 && (
+                    <Box sx={{ mt: 'auto', pt: 2 }}>
+                      <Divider sx={{ mb: 2, borderColor: '#F1F5F9' }} />
                       <Typography
-                        variant="subtitle2"
-                        sx={{ fontWeight: 600, color: '#64748B', mb: 1.5, textTransform: 'uppercase' }}
+                        variant="subtitle1"
+                        component="h3"
+                        sx={{
+                          fontFamily: '"Space Grotesk", sans-serif',
+                          fontWeight: 700,
+                          color: '#171A2B',
+                          mb: 1.5,
+                        }}
                       >
                         Platforms
                       </Typography>
-                      <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
-                        {Object.entries(platformCounts).map(([platform, count]) => (
-                          <Chip
-                            key={platform}
-                            label={`${platform}: ${count}`}
-                            size="small"
-                            sx={{
-                              backgroundColor: '#F1F5F9',
-                              fontWeight: 600,
-                              fontFamily: '"IBM Plex Mono", monospace',
-                              fontSize: '0.75rem',
-                            }}
-                          />
-                        ))}
+                      <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1.25 }}>
+                        {Object.entries(normalizedPlatformCounts).map(([platform, count], idx) => {
+                          const platformColors = ['#4F3FF0', '#0E9F6E', '#D97706', '#8B7FF5', '#3B82F6', '#EC4899'];
+                          const color = platformColors[idx % platformColors.length];
+                          return (
+                            <Box
+                              key={platform}
+                              sx={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 1,
+                                px: 1.5,
+                                py: 0.6,
+                                borderRadius: 1.5,
+                                backgroundColor: '#F8FAFC',
+                                border: '1px solid #E2E8F0',
+                              }}
+                            >
+                              <Box sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: color }} />
+                              <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 600, color: '#334155' }}>
+                                {platform}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  fontFamily: '"IBM Plex Mono", monospace',
+                                  fontWeight: 700,
+                                  color: '#64748B',
+                                  fontSize: '0.75rem',
+                                  ml: 0.25,
+                                }}
+                              >
+                                {count}
+                              </Typography>
+                            </Box>
+                          );
+                        })}
                       </Stack>
-                    </>
+                    </Box>
                   )}
                 </Paper>
               </Grid>

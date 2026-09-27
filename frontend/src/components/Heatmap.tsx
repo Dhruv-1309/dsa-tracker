@@ -14,6 +14,8 @@ import {
   Tooltip,
 } from '@mui/material';
 
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+
 function generateHeatmapGrid(year: number) {
   const startDate = new Date(year, 0, 1);
   const endDate = new Date(year, 11, 31);
@@ -46,6 +48,14 @@ function generateHeatmapGrid(year: number) {
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+const LEGEND_ITEMS = [
+  { level: 0, label: '0 attempts (no activity)', color: '#E2E4EC' },
+  { level: 1, label: '1 attempt', color: '#C7CCE3' },
+  { level: 3, label: '2–3 attempts', color: '#8B7FF5' },
+  { level: 5, label: '4–5 attempts', color: '#4F3FF0' },
+  { level: 6, label: '6+ attempts (optimal/peak)', color: '#10B981' },
+];
 
 export default function Heatmap() {
   const fetchApi = useApiClient();
@@ -87,10 +97,14 @@ export default function Heatmap() {
   };
 
   return (
-    <Paper elevation={0} sx={{ p: 3.5, borderRadius: 3, border: '1px solid #E3E6EF' }}>
+    <Paper elevation={0} sx={{ p: 3, borderRadius: 2, border: '1px solid #E3E6EF' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <div>
-          <Typography variant="h6" sx={{ fontFamily: '"Space Grotesk", sans-serif', fontWeight: 700 }}>
+          <Typography
+            variant="h6"
+            component="h2"
+            sx={{ fontFamily: '"Space Grotesk", sans-serif', fontWeight: 700 }}
+          >
             Activity & Habit Heatmap
           </Typography>
           <Typography variant="body2" color="text.secondary">
@@ -98,15 +112,25 @@ export default function Heatmap() {
           </Typography>
         </div>
 
-        <FormControl size="small" sx={{ minWidth: 100 }}>
+        <FormControl size="small" sx={{ minWidth: 110 }}>
           <Select
             value={year}
             onChange={(e) => setYear(Number(e.target.value))}
+            IconComponent={KeyboardArrowDownIcon}
+            inputProps={{ 'aria-label': 'Select activity year' }}
             sx={{
-              borderRadius: 2,
+              borderRadius: 1.5,
               fontFamily: '"IBM Plex Mono", monospace',
               fontWeight: 600,
               fontSize: '0.85rem',
+              backgroundColor: '#FFFFFF',
+              '& .MuiSelect-select': {
+                py: 0.8,
+                pr: 4,
+              },
+              '& .MuiSelect-icon': {
+                color: '#4F3FF0',
+              },
             }}
           >
             {[currentYear - 2, currentYear - 1, currentYear].map((y) => (
@@ -128,31 +152,41 @@ export default function Heatmap() {
       ) : (
         <Box sx={{ overflowX: 'auto', pb: 2 }}>
           <Box sx={{ minWidth: 780, position: 'relative' }}>
-            {/* Months Header */}
-            <Box sx={{ display: 'flex', ml: 4, mb: 1, position: 'relative', height: 20 }}>
-              {grid.map((week, index) => {
-                const firstDay = week.find((d) => d !== null);
-                if (firstDay && firstDay.getDate() <= 7 && index > 0) {
-                  const prevWeekFirstDay = grid[index - 1].find((d) => d !== null);
-                  if (prevWeekFirstDay && prevWeekFirstDay.getMonth() !== firstDay.getMonth()) {
-                    return (
+            {/* Months Header — Aligned directly to week columns */}
+            <Box sx={{ display: 'flex', gap: '3px', mb: 1, height: 18, alignItems: 'center' }}>
+              {/* Day labels offset spacer */}
+              <Box sx={{ width: 28, pr: 1, flexShrink: 0 }} />
+
+              {/* Week columns header */}
+              {grid.map((week, weekIdx) => {
+                const firstValidDay = week.find((d) => d !== null);
+                const prevWeekFirstDay = weekIdx > 0 ? grid[weekIdx - 1]?.find((d) => d !== null) : null;
+                const isNewMonth =
+                  firstValidDay &&
+                  (weekIdx === 0 ||
+                    (prevWeekFirstDay && prevWeekFirstDay.getMonth() !== firstValidDay.getMonth()));
+
+                return (
+                  <Box key={weekIdx} sx={{ flex: 1, position: 'relative' }}>
+                    {isNewMonth && (
                       <Typography
-                        key={index}
                         variant="caption"
                         sx={{
                           position: 'absolute',
-                          left: `${(index / grid.length) * 100}%`,
+                          top: 0,
+                          left: 0,
                           fontFamily: '"IBM Plex Mono", monospace',
                           color: '#64748B',
-                          fontSize: '0.75rem',
+                          fontSize: '0.72rem',
+                          fontWeight: 600,
+                          whiteSpace: 'nowrap',
                         }}
                       >
-                        {MONTHS[firstDay.getMonth()]}
+                        {MONTHS[firstValidDay.getMonth()]}
                       </Typography>
-                    );
-                  }
-                }
-                return null;
+                    )}
+                  </Box>
+                );
               })}
             </Box>
 
@@ -219,26 +253,58 @@ export default function Heatmap() {
         </Box>
       )}
 
-      {/* Legend Footer */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1, mt: 2 }}>
-        <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem' }}>
+      {/* Legend Footer with Accessible Labels & Tooltips */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          alignItems: 'center',
+          gap: 1.5,
+          mt: 2,
+          flexWrap: 'wrap',
+        }}
+        role="group"
+        aria-label="Activity heatmap color legend"
+      >
+        <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', fontWeight: 600 }}>
           Less
         </Typography>
-        <Stack direction="row" spacing="3px">
-          {[0, 1, 3, 5, 6].map((level) => (
-            <Box
-              key={level}
-              sx={{
-                width: 12,
-                height: 12,
-                borderRadius: '2px',
-                backgroundColor: getColor(level),
-              }}
-            />
+        <Stack direction="row" spacing="4px" sx={{ alignItems: 'center' }}>
+          {LEGEND_ITEMS.map(({ level, label, color }) => (
+            <Tooltip key={level} title={label} arrow>
+              <Box
+                component="span"
+                role="img"
+                aria-label={label}
+                sx={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: '2px',
+                  backgroundColor: color,
+                  cursor: 'pointer',
+                  display: 'inline-block',
+                }}
+              />
+            </Tooltip>
           ))}
         </Stack>
-        <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem' }}>
+        <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.75rem', fontWeight: 600 }}>
           More
+        </Typography>
+        <Typography
+          variant="caption"
+          sx={{
+            color: '#10B981',
+            fontSize: '0.72rem',
+            fontWeight: 600,
+            ml: 1,
+            backgroundColor: '#DEF7EC',
+            px: 1,
+            py: 0.25,
+            borderRadius: 1,
+          }}
+        >
+          Green = 6+ optimal solves
         </Typography>
       </Box>
     </Paper>
