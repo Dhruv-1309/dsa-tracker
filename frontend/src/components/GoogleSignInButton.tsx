@@ -74,15 +74,19 @@ export default function GoogleSignInButton({
             onError('Authentication succeeded but no authorization token was received.');
           }
         } else {
-          let errorMessage = 'Google authentication failed.';
+          let errorMessage = 'Google authentication failed. Please try again.';
           try {
             const data = await res.json();
-            if (data?.message) {
+            if (data?.error) {
+              errorMessage = data.error;
+            } else if (data?.message) {
               errorMessage = data.message;
             }
           } catch {
-            const textResponse = await res.text();
-            if (textResponse) errorMessage = textResponse;
+            // response was not JSON
+          }
+          if (res.status === 404) {
+            errorMessage = 'Backend /api/auth/google endpoint not found (404). Backend deployment may still be compiling on Render.';
           }
           onError(errorMessage);
         }

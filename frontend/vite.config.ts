@@ -8,7 +8,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: process.env.VITE_API_TARGET || 'https://dsa-tracker-backend-v5gf.onrender.com',
+        target: process.env.VITE_API_TARGET || 'http://localhost:8080',
         changeOrigin: true,
         secure: false,
       }
