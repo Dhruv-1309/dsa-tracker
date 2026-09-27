@@ -222,35 +222,6 @@ export default function Register() {
             </Alert>
           )}
 
-          {/* Google Sign-in */}
-          <Box sx={{ mb: 2.5 }}>
-            <GoogleSignInButton
-              text="signup_with"
-              disabled={loading}
-              onSuccess={(token) => {
-                setToken(token);
-                navigate('/dashboard');
-              }}
-              onError={(msg) => setError(msg)}
-            />
-          </Box>
-
-          <Divider sx={{ mb: 3, borderColor: '#E2E8F0' }}>
-            <Typography
-              variant="caption"
-              sx={{
-                color: '#94A3B8',
-                px: 1.5,
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-                fontWeight: 600,
-                fontSize: '0.72rem',
-              }}
-            >
-              or register with email
-            </Typography>
-          </Divider>
-
           <Box component="form" onSubmit={handleSubmit} noValidate>
             <Stack spacing={2.5}>
               <Box>
@@ -340,6 +311,35 @@ export default function Register() {
                 {loading ? <CircularProgress size={24} color="inherit" /> : 'Get Started Free'}
               </Button>
             </Stack>
+
+            <Divider sx={{ my: 3, borderColor: '#E2E8F0' }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: '#94A3B8',
+                  px: 1.5,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  fontWeight: 600,
+                  fontSize: '0.72rem',
+                }}
+              >
+                or sign up with
+              </Typography>
+            </Divider>
+
+            {/* Google Sign-in */}
+            <Box>
+              <GoogleSignInButton
+                text="signup_with"
+                disabled={loading}
+                onSuccess={(token) => {
+                  setToken(token);
+                  navigate('/dashboard');
+                }}
+                onError={(msg) => setError(msg)}
+              />
+            </Box>
 
             <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid #F1F5F9', textAlign: 'center' }}>
               <Typography variant="body2" color="text.secondary">
