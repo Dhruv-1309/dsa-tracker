@@ -1,6 +1,5 @@
 package com.example.demo.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,6 +11,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class GoogleAuthRequest {
 
-    @NotBlank(message = "Google ID token credential is required")
+    /**
+     * Google ID token credential (from Google Identity Services credential response).
+     */
     private String credential;
+
+    /**
+     * Google OAuth2 access token (from Google Identity Services OAuth2 token client).
+     */
+    private String accessToken;
 }

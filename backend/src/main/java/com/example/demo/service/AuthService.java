@@ -90,18 +90,34 @@ public class AuthService {
     }
 
     public AuthResponse googleLogin(GoogleAuthRequest request) {
-        if (request.getCredential() == null || request.getCredential().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Google credential token cannot be blank");
+        String token;
+        boolean isAccessToken;
+
+        if (request.getAccessToken() != null && !request.getAccessToken().isBlank()) {
+            token = request.getAccessToken().trim();
+            isAccessToken = true;
+        } else if (request.getCredential() != null && !request.getCredential().isBlank()) {
+            token = request.getCredential().trim();
+            isAccessToken = false;
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Google authentication token (credential or accessToken) is required");
         }
 
         Map<String, Object> payload;
         try {
-            payload = restClient.get()
-                    .uri("https://oauth2.googleapis.com/tokeninfo?id_token={idToken}", request.getCredential().trim())
-                    .retrieve()
-                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+            if (isAccessToken) {
+                payload = restClient.get()
+                        .uri("https://oauth2.googleapis.com/tokeninfo?access_token={token}", token)
+                        .retrieve()
+                        .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+            } else {
+                payload = restClient.get()
+                        .uri("https://oauth2.googleapis.com/tokeninfo?id_token={token}", token)
+                        .retrieve()
+                        .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+            }
         } catch (Exception e) {
-            log.error("Failed to verify Google ID token with Google tokeninfo endpoint", e);
+            log.error("Failed to verify Google token with Google tokeninfo endpoint", e);
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired Google token");
         }
 
@@ -109,10 +125,13 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Empty response from Google verification");
         }
 
-        // Verify audience (aud) matches our configured Google Client ID
+        // Verify audience (aud or azp) matches our configured Google Client ID
         String aud = (String) payload.get("aud");
-        if (aud == null || !aud.equals(googleClientId)) {
-            log.warn("Google token audience mismatch: expected {}, got {}", googleClientId, aud);
+        String azp = (String) payload.get("azp");
+        boolean audMatches = (aud != null && aud.equals(googleClientId)) ||
+                             (azp != null && azp.equals(googleClientId));
+        if (!audMatches) {
+            log.warn("Google token audience mismatch: expected {}, got aud={}, azp={}", googleClientId, aud, azp);
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token audience does not match configured client ID");
         }
 
@@ -137,6 +156,22 @@ public class AuthService {
             String familyName = (String) payload.get("family_name");
             if (givenName != null && !givenName.isBlank()) {
                 name = givenName + (familyName != null ? " " + familyName : "");
+            }
+        }
+
+        // If access token was used and name is still missing, fetch user profile info
+        if (isAccessToken && (name == null || name.isBlank())) {
+            try {
+                Map<String, Object> userInfo = restClient.get()
+                        .uri("https://www.googleapis.com/oauth2/v3/userinfo")
+                        .header("Authorization", "Bearer " + token)
+                        .retrieve()
+                        .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+                if (userInfo != null && userInfo.containsKey("name")) {
+                    name = (String) userInfo.get("name");
+                }
+            } catch (Exception ignored) {
+                // Non-critical fallback
             }
         }
 
