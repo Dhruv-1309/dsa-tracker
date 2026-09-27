@@ -43,4 +43,9 @@ public class ApplicationConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
+    @Bean
+    public org.springframework.web.client.RestClient restClient() {
+        return org.springframework.web.client.RestClient.create();
+    }
 }

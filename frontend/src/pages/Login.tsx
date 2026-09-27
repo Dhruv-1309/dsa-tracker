@@ -14,6 +14,7 @@ import {
   CircularProgress,
   Stack,
   Chip,
+  Divider,
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
@@ -24,6 +25,7 @@ import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import AutoGraphIcon from '@mui/icons-material/AutoGraph';
 import { TextEffect } from '../components/motion/TextEffect';
+import GoogleSignInButton from '../components/GoogleSignInButton';
 import { API_BASE_URL } from '../api/config';
 
 export default function Login() {
@@ -214,6 +216,35 @@ export default function Login() {
               {error}
             </Alert>
           )}
+
+          {/* Google Sign-in */}
+          <Box sx={{ mb: 2.5 }}>
+            <GoogleSignInButton
+              text="continue_with"
+              disabled={loading}
+              onSuccess={(token) => {
+                setToken(token);
+                navigate('/dashboard');
+              }}
+              onError={(msg) => setError(msg)}
+            />
+          </Box>
+
+          <Divider sx={{ mb: 3, borderColor: '#E2E8F0' }}>
+            <Typography
+              variant="caption"
+              sx={{
+                color: '#94A3B8',
+                px: 1.5,
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                fontWeight: 600,
+                fontSize: '0.72rem',
+              }}
+            >
+              or continue with email
+            </Typography>
+          </Divider>
 
           <Box component="form" onSubmit={handleSubmit} noValidate>
             <Stack spacing={2.5}>

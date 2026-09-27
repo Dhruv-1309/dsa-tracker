@@ -43,4 +43,6 @@ application:
       expiration: ${JWT_EXPIRATION:86400000}
     cors:
       allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
+    google:
+      client-id: ${GOOGLE_CLIENT_ID:268901294445-dg2ejtiatbgtfu5jp1vc9mpn5abrrbt7.apps.googleusercontent.com}
 
