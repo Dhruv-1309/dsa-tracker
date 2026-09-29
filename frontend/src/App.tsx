@@ -59,6 +59,7 @@ function App() {
                   <Route path="/topics" element={<TopicsPage />} />
                   <Route path="/friends" element={<Friends />} />
                   <Route path="/friends/:friendUserId" element={<FriendSummaryView />} />
+                  <Route path="/friends/:friendUserId/problems/:problemId" element={<ProblemAttempts />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/problems/new" element={<ProblemForm />} />
                   <Route path="/problems/:id/edit" element={<ProblemForm />} />

@@ -2,6 +2,7 @@ package com.example.demo.service;
 
 import com.example.demo.dto.*;
 import com.example.demo.model.*;
+import com.example.demo.repository.AttemptRepository;
 import com.example.demo.repository.FriendConnectionRepository;
 import com.example.demo.repository.ProblemRepository;
 import com.example.demo.repository.UserRepository;
@@ -35,6 +36,9 @@ class FriendServiceTest {
 
     @Mock
     private ProblemRepository problemRepository;
+
+    @Mock
+    private AttemptRepository attemptRepository;
 
     @Mock
     private StatsService statsService;
@@ -159,10 +163,206 @@ class FriendServiceTest {
         assertEquals(userBId, response.getFriendUserId());
         assertEquals("Bob", response.getDisplayName());
         assertEquals("bob@example.com", response.getEmail());
-        // Only 1 solved problem returned, unsolved excluded
-        assertEquals(1, response.getSolvedProblems().size());
-        assertEquals("Climbing Stairs", response.getSolvedProblems().get(0).getTitle());
+        // All problems (solved + tried) returned in both problems and solvedProblems
+        assertEquals(2, response.getProblems().size());
+        assertEquals(2, response.getSolvedProblems().size());
         assertEquals(1, response.getHeatmap().size());
+    }
+
+    @Test
+    @DisplayName("GET /friends/{friendUserId}/problems/{problemId} returns 403 when no connection exists")
+    void getFriendProblemDetail_noConnection_returns403() {
+        UUID problemId = UUID.randomUUID();
+        when(userRepository.findById(userAId)).thenReturn(Optional.of(userA));
+        when(userRepository.findById(userBId)).thenReturn(Optional.of(userB));
+        when(friendConnectionRepository.findAcceptedConnectionBetweenUsers(userA, userB))
+                .thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+                friendService.getFriendProblemDetail(userAId, userBId, problemId)
+        );
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertTrue(ex.getReason().contains("Access denied"));
+    }
+
+    @Test
+    @DisplayName("GET /friends/{friendUserId}/problems/{problemId} returns 403 when only PENDING connection exists")
+    void getFriendProblemDetail_pendingConnection_returns403() {
+        UUID problemId = UUID.randomUUID();
+        when(userRepository.findById(userAId)).thenReturn(Optional.of(userA));
+        when(userRepository.findById(userBId)).thenReturn(Optional.of(userB));
+        when(friendConnectionRepository.findAcceptedConnectionBetweenUsers(userA, userB))
+                .thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+                friendService.getFriendProblemDetail(userAId, userBId, problemId)
+        );
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    }
+
+    @Test
+    @DisplayName("GET /friends/{friendUserId}/problems/{problemId} returns 404 when problem does not exist")
+    void getFriendProblemDetail_problemNotFound_returns404() {
+        UUID problemId = UUID.randomUUID();
+        FriendConnection connection = FriendConnection.builder()
+                .id(UUID.randomUUID())
+                .userA(userA)
+                .userB(userB)
+                .status(ConnectionStatus.ACCEPTED)
+                .build();
+
+        when(userRepository.findById(userAId)).thenReturn(Optional.of(userA));
+        when(userRepository.findById(userBId)).thenReturn(Optional.of(userB));
+        when(friendConnectionRepository.findAcceptedConnectionBetweenUsers(userA, userB))
+                .thenReturn(Optional.of(connection));
+        when(problemRepository.findById(problemId)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+                friendService.getFriendProblemDetail(userAId, userBId, problemId)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
+    @DisplayName("GET /friends/{friendUserId}/problems/{problemId} returns 404 when problem belongs to another user")
+    void getFriendProblemDetail_wrongOwner_returns404() {
+        UUID problemId = UUID.randomUUID();
+        FriendConnection connection = FriendConnection.builder()
+                .id(UUID.randomUUID())
+                .userA(userA)
+                .userB(userB)
+                .status(ConnectionStatus.ACCEPTED)
+                .build();
+
+        User thirdParty = User.builder().id(UUID.randomUUID()).email("charlie@example.com").build();
+        Problem problem = Problem.builder()
+                .id(problemId)
+                .user(thirdParty)
+                .title("Foreign Problem")
+                .build();
+
+        when(userRepository.findById(userAId)).thenReturn(Optional.of(userA));
+        when(userRepository.findById(userBId)).thenReturn(Optional.of(userB));
+        when(friendConnectionRepository.findAcceptedConnectionBetweenUsers(userA, userB))
+                .thenReturn(Optional.of(connection));
+        when(problemRepository.findById(problemId)).thenReturn(Optional.of(problem));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+                friendService.getFriendProblemDetail(userAId, userBId, problemId)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertTrue(ex.getReason().contains("does not belong to friend"));
+    }
+
+    @Test
+    @DisplayName("GET /friends/{friendUserId}/problems/{problemId} returns empty attempts array when 0 attempts")
+    void getFriendProblemDetail_zeroAttempts_returnsEmptyList() {
+        UUID problemId = UUID.randomUUID();
+        FriendConnection connection = FriendConnection.builder()
+                .id(UUID.randomUUID())
+                .userA(userA)
+                .userB(userB)
+                .status(ConnectionStatus.ACCEPTED)
+                .build();
+
+        Problem problem = Problem.builder()
+                .id(problemId)
+                .user(userB)
+                .title("Two Sum")
+                .platform("LeetCode")
+                .difficulty(Difficulty.EASY)
+                .currentStatus("Tried")
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(userRepository.findById(userAId)).thenReturn(Optional.of(userA));
+        when(userRepository.findById(userBId)).thenReturn(Optional.of(userB));
+        when(friendConnectionRepository.findAcceptedConnectionBetweenUsers(userA, userB))
+                .thenReturn(Optional.of(connection));
+        when(problemRepository.findById(problemId)).thenReturn(Optional.of(problem));
+        when(attemptRepository.findByProblemIdAndUserIdOrderByAttemptedAtDesc(problemId, userBId))
+                .thenReturn(Collections.emptyList());
+
+        FriendProblemDetailResponse detail = friendService.getFriendProblemDetail(userAId, userBId, problemId);
+
+        assertNotNull(detail);
+        assertEquals(problemId, detail.getId());
+        assertEquals("Two Sum", detail.getTitle());
+        assertNotNull(detail.getAttempts());
+        assertTrue(detail.getAttempts().isEmpty());
+    }
+
+    @Test
+    @DisplayName("GET /friends/{friendUserId}/problems/{problemId} returns full attempts timeline with details")
+    void getFriendProblemDetail_withAttempts_returnsTimeline() {
+        UUID problemId = UUID.randomUUID();
+        FriendConnection connection = FriendConnection.builder()
+                .id(UUID.randomUUID())
+                .userA(userA)
+                .userB(userB)
+                .status(ConnectionStatus.ACCEPTED)
+                .build();
+
+        Topic topic = Topic.builder().id(UUID.randomUUID()).name("Arrays").build();
+        Problem problem = Problem.builder()
+                .id(problemId)
+                .user(userB)
+                .title("Two Sum")
+                .platform("LeetCode")
+                .difficulty(Difficulty.EASY)
+                .primaryTopic(topic)
+                .extraTopics(new HashSet<>())
+                .currentStatus("Solved")
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        MistakeTag tag = MistakeTag.builder().id(UUID.randomUUID()).name("Off-by-one").build();
+        Attempt attempt = Attempt.builder()
+                .id(UUID.randomUUID())
+                .problem(problem)
+                .user(userB)
+                .attemptedAt(LocalDateTime.now())
+                .result("Solved")
+                .understood(true)
+                .logicFound(true)
+                .codeCompleted(true)
+                .timeTakenMin(25)
+                .timeComplexity("O(n)")
+                .spaceComplexity("O(n)")
+                .confidence(5)
+                .approach("Used hash map for complements")
+                .mistakes("Initially forgot zero index")
+                .code("def twoSum(nums, target): return {}")
+                .language("Python")
+                .mistakeTags(Set.of(tag))
+                .build();
+
+        when(userRepository.findById(userAId)).thenReturn(Optional.of(userA));
+        when(userRepository.findById(userBId)).thenReturn(Optional.of(userB));
+        when(friendConnectionRepository.findAcceptedConnectionBetweenUsers(userA, userB))
+                .thenReturn(Optional.of(connection));
+        when(problemRepository.findById(problemId)).thenReturn(Optional.of(problem));
+        when(attemptRepository.findByProblemIdAndUserIdOrderByAttemptedAtDesc(problemId, userBId))
+                .thenReturn(List.of(attempt));
+
+        FriendProblemDetailResponse detail = friendService.getFriendProblemDetail(userAId, userBId, problemId);
+
+        assertNotNull(detail);
+        assertEquals(problemId, detail.getId());
+        assertEquals(1, detail.getAttempts().size());
+
+        AttemptResponse aRes = detail.getAttempts().get(0);
+        assertEquals("Solved", aRes.getResult());
+        assertEquals("Used hash map for complements", aRes.getApproach());
+        assertEquals("Initially forgot zero index", aRes.getMistakes());
+        assertEquals("def twoSum(nums, target): return {}", aRes.getCode());
+        assertEquals(5, aRes.getConfidence());
+        assertEquals(25, aRes.getTimeTakenMin());
+        assertTrue(aRes.getMistakeTags().contains("Off-by-one"));
     }
 
     @Test

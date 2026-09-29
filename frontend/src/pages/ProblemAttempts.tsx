@@ -33,6 +33,8 @@ import RotateRightIcon from '@mui/icons-material/RotateRight';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import PsychologyAltIcon from '@mui/icons-material/PsychologyAlt';
 import CloseIcon from '@mui/icons-material/Close';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import type { FriendProblemDetailResponse } from '../types/friend';
 
 const CONFIDENCE_OPTIONS = [
   { value: 1, label: '1 — Unfamiliar' },
@@ -53,12 +55,14 @@ const relativeTime = (iso?: string) => {
 };
 
 export default function ProblemAttempts() {
-  const { id } = useParams<{ id: string }>();
+  const { id, friendUserId, problemId } = useParams<{ id?: string; friendUserId?: string; problemId?: string }>();
+  const effectiveProblemId = problemId || id;
+  const isFriendView = Boolean(friendUserId);
   const navigate = useNavigate();
   const fetchApi = useApiClient();
   const queryClient = useQueryClient();
 
-  const [blindMode, setBlindMode] = useState(true);
+  const [blindMode, setBlindMode] = useState(!isFriendView);
   const [showNewAttemptForm, setShowNewAttemptForm] = useState(false);
   const [revisitDate, setRevisitDate] = useState('');
   const [scheduleSuccess, setScheduleSuccess] = useState('');
@@ -74,30 +78,87 @@ export default function ProblemAttempts() {
   const [newApproach, setNewApproach] = useState('');
   const [newMistakes, setNewMistakes] = useState('');
 
-  // Fetch problem metadata
-  const { data: problem, isLoading: isProblemLoading, isError: isProblemError } = useQuery<Problem>({
-    queryKey: ['problem', id],
+  // Fetch friend problem detail if viewing as friend
+  const {
+    data: friendDetail,
+    isLoading: isFriendDetailLoading,
+    isError: isFriendDetailError,
+    error: friendDetailError,
+  } = useQuery<FriendProblemDetailResponse>({
+    queryKey: ['friendProblemDetail', friendUserId, effectiveProblemId],
     queryFn: async () => {
-      const res = await fetchApi(`/problems/${id}`);
+      const res = await fetchApi(`/v1/friends/${friendUserId}/problems/${effectiveProblemId}`);
+      if (!res.ok) {
+        const fallback = await fetchApi(`/friends/${friendUserId}/problems/${effectiveProblemId}`);
+        if (!fallback.ok) {
+          if (fallback.status === 403 || res.status === 403) {
+            throw new Error('Access denied: You must be accepted friends with this user to view their problem details.');
+          }
+          throw new Error('Problem not found');
+        }
+        return fallback.json();
+      }
+      return res.json();
+    },
+    enabled: isFriendView && Boolean(effectiveProblemId),
+    retry: false,
+  });
+
+  // Fetch own problem metadata if viewing own problem
+  const { data: ownProblem, isLoading: isProblemLoading, isError: isProblemError } = useQuery<Problem>({
+    queryKey: ['problem', effectiveProblemId],
+    queryFn: async () => {
+      const res = await fetchApi(`/problems/${effectiveProblemId}`);
       if (!res.ok) throw new Error('Problem not found');
       return res.json();
     },
+    enabled: !isFriendView && Boolean(effectiveProblemId),
   });
 
-  // Fetch attempts list
-  const { data: attempts = [], isLoading: isAttemptsLoading } = useQuery<Attempt[]>({
-    queryKey: ['attempts', id],
+  // Fetch own attempts list if viewing own problem
+  const { data: ownAttempts = [], isLoading: isAttemptsLoading } = useQuery<Attempt[]>({
+    queryKey: ['attempts', effectiveProblemId],
     queryFn: async () => {
-      const res = await fetchApi(`/problems/${id}/attempts`);
+      const res = await fetchApi(`/problems/${effectiveProblemId}/attempts`);
       if (!res.ok) throw new Error('Failed to load attempts');
       return res.json();
     },
+    enabled: !isFriendView && Boolean(effectiveProblemId),
   });
+
+  const problem: Problem | undefined = isFriendView
+    ? (friendDetail ? {
+        id: friendDetail.id,
+        title: friendDetail.title,
+        platform: friendDetail.platform,
+        url: friendDetail.url,
+        difficulty: friendDetail.difficulty,
+        primaryTopicId: friendDetail.primaryTopicId || '',
+        primaryTopicName: friendDetail.primaryTopicName || 'General',
+        extraTopicNames: friendDetail.extraTopicNames || [],
+        optimalTime: friendDetail.optimalTime,
+        optimalSpace: friendDetail.optimalSpace,
+        currentStatus: friendDetail.currentStatus || 'Solved',
+        createdAt: friendDetail.createdAt || '',
+        updatedAt: '',
+      } : undefined)
+    : ownProblem;
+
+  const attempts: Attempt[] = isFriendView
+    ? (friendDetail?.attempts || [])
+    : ownAttempts;
+
+  const isDataLoading = isFriendView ? isFriendDetailLoading : (isProblemLoading || isAttemptsLoading);
+  const isDataError = isFriendView ? isFriendDetailError : isProblemError;
+  const errorMessage = isFriendView
+    ? (friendDetailError instanceof Error ? friendDetailError.message : 'Problem not found or inaccessible')
+    : 'Problem not found. It may have been deleted.';
 
   // Create attempt mutation
   const attemptMutation = useMutation({
     mutationFn: async (payload: AttemptRequest) => {
-      const res = await fetchApi(`/problems/${id}/attempts`, {
+      if (isFriendView) throw new Error('Cannot add attempt in read-only friend mode');
+      const res = await fetchApi(`/problems/${effectiveProblemId}/attempts`, {
         method: 'POST',
         body: JSON.stringify(payload),
       });
@@ -105,8 +166,8 @@ export default function ProblemAttempts() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['attempts', id] });
-      queryClient.invalidateQueries({ queryKey: ['problem', id] });
+      queryClient.invalidateQueries({ queryKey: ['attempts', effectiveProblemId] });
+      queryClient.invalidateQueries({ queryKey: ['problem', effectiveProblemId] });
       queryClient.invalidateQueries({ queryKey: ['problems'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       setShowNewAttemptForm(false);
@@ -119,9 +180,9 @@ export default function ProblemAttempts() {
   // Schedule revisit mutation
   const scheduleMutation = useMutation({
     mutationFn: async (dateStr: string) => {
-      if (!problem) return;
+      if (isFriendView || !problem) return;
       // We can update the problem's revisit date or send through attempt
-      const res = await fetchApi(`/problems/${id}`, {
+      const res = await fetchApi(`/problems/${effectiveProblemId}`, {
         method: 'PUT',
         body: JSON.stringify({
           title: problem.title,
@@ -138,7 +199,7 @@ export default function ProblemAttempts() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['problem', id] });
+      queryClient.invalidateQueries({ queryKey: ['problem', effectiveProblemId] });
       queryClient.invalidateQueries({ queryKey: ['problems'] });
       queryClient.invalidateQueries({ queryKey: ['revisitQueue'] });
       setScheduleSuccess(`Revisit scheduled for ${revisitDate}`);
@@ -174,7 +235,7 @@ export default function ProblemAttempts() {
     scheduleMutation.mutate(dateStr);
   };
 
-  if (isProblemLoading) {
+  if (isDataLoading) {
     return (
       <Container maxWidth="lg" sx={{ py: 8, textAlign: 'center' }}>
         <CircularProgress size={36} sx={{ color: '#4F3FF0', mb: 2 }} />
@@ -185,12 +246,16 @@ export default function ProblemAttempts() {
     );
   }
 
-  if (isProblemError || !problem) {
+  if (isDataError || !problem) {
     return (
       <Container maxWidth="lg" sx={{ py: 6 }}>
-        <Alert severity="error">Problem not found. It may have been deleted.</Alert>
-        <Button component={RouterLink} to="/problems" sx={{ mt: 2 }}>
-          Back to Problems
+        <Alert severity="error">{errorMessage}</Alert>
+        <Button
+          component={RouterLink}
+          to={isFriendView ? `/friends/${friendUserId}` : '/problems'}
+          sx={{ mt: 2 }}
+        >
+          {isFriendView ? "Back to Friend's Log" : 'Back to Problems'}
         </Button>
       </Container>
     );
@@ -214,11 +279,11 @@ export default function ProblemAttempts() {
       {/* Back button */}
       <Button
         component={RouterLink}
-        to="/problems"
+        to={isFriendView ? `/friends/${friendUserId}` : '/problems'}
         startIcon={<ArrowBackIcon sx={{ fontSize: 16 }} />}
         sx={{ color: '#64748B', mb: 2, pl: 0, '&:hover': { background: 'transparent', color: '#171A2B' } }}
       >
-        Problem Library
+        {isFriendView ? "Back to Friend's Log" : 'Problem Library'}
       </Button>
 
       {/* Hero Header Card */}
@@ -297,26 +362,40 @@ export default function ProblemAttempts() {
           </div>
 
           {/* Quick Action Buttons */}
-          <Stack direction="row" spacing={1.5}>
-            <Button
-              variant="outlined"
+          {isFriendView ? (
+            <Chip
+              icon={<LockOutlinedIcon sx={{ fontSize: '0.9rem !important' }} />}
+              label="Read-Only Friend View"
               size="small"
-              startIcon={<EditOutlinedIcon />}
-              onClick={() => navigate(`/problems/${id}/edit`)}
-              sx={{ borderRadius: 2, fontWeight: 600 }}
-            >
-              Edit Details
-            </Button>
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<AddIcon />}
-              onClick={() => setShowNewAttemptForm(!showNewAttemptForm)}
-              sx={{ borderRadius: 2, fontWeight: 600 }}
-            >
-              {showNewAttemptForm ? 'Close Form' : 'New Attempt'}
-            </Button>
-          </Stack>
+              sx={{
+                backgroundColor: '#F1F5F9',
+                color: '#475569',
+                fontWeight: 600,
+                fontSize: '0.75rem',
+              }}
+            />
+          ) : (
+            <Stack direction="row" spacing={1.5}>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<EditOutlinedIcon />}
+                onClick={() => navigate(`/problems/${effectiveProblemId}/edit`)}
+                sx={{ borderRadius: 2, fontWeight: 600 }}
+              >
+                Edit Details
+              </Button>
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<AddIcon />}
+                onClick={() => setShowNewAttemptForm(!showNewAttemptForm)}
+                sx={{ borderRadius: 2, fontWeight: 600 }}
+              >
+                {showNewAttemptForm ? 'Close Form' : 'New Attempt'}
+              </Button>
+            </Stack>
+          )}
         </Box>
       </Paper>
 
@@ -331,7 +410,9 @@ export default function ProblemAttempts() {
               {attempts.length}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Last thought: {relativeTime(problem.lastSuccessfulAt)}
+              {isFriendView
+                ? (attempts.length > 0 ? `Latest: ${new Date(attempts[0].attemptedAt).toLocaleDateString()}` : 'No attempts logged')
+                : `Last thought: ${relativeTime(problem.lastSuccessfulAt)}`}
             </Typography>
           </Paper>
         </Grid>
@@ -346,15 +427,15 @@ export default function ProblemAttempts() {
               sx={{
                 fontFamily: '"IBM Plex Mono", monospace',
                 fontWeight: 700,
-                color: blindMode ? '#94A3B8' : '#171A2B',
-                fontStyle: blindMode ? 'italic' : 'normal',
+                color: (!isFriendView && blindMode) ? '#94A3B8' : '#171A2B',
+                fontStyle: (!isFriendView && blindMode) ? 'italic' : 'normal',
                 mt: 0.5,
               }}
             >
-              {blindMode ? 'Hidden in Blind Mode' : `${problem.optimalTime || 'O(n)'} time`}
+              {(!isFriendView && blindMode) ? 'Hidden in Blind Mode' : `${problem.optimalTime || 'O(n)'} time`}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {blindMode ? 'Toggle blind mode to view' : `Space: ${problem.optimalSpace || 'O(1)'}`}
+              {(!isFriendView && blindMode) ? 'Toggle blind mode to view' : `Space: ${problem.optimalSpace || 'O(1)'}`}
             </Typography>
           </Paper>
         </Grid>
@@ -362,21 +443,23 @@ export default function ProblemAttempts() {
         <Grid size={{ xs: 12, sm: 4 }}>
           <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: '1px solid #E3E6EF' }}>
             <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>
-              Next Revisit
+              {isFriendView ? 'Problem Status' : 'Next Revisit'}
             </Typography>
             <Typography
               variant="h5"
               sx={{
                 fontFamily: '"IBM Plex Mono", monospace',
                 fontWeight: 700,
-                color: problem.nextRevisitDate ? '#4F3FF0' : '#94A3B8',
+                color: isFriendView ? '#171A2B' : (problem.nextRevisitDate ? '#4F3FF0' : '#94A3B8'),
                 mt: 0.5,
               }}
             >
-              {problem.nextRevisitDate || 'Unscheduled'}
+              {isFriendView ? (problem.currentStatus || 'Logged') : (problem.nextRevisitDate || 'Unscheduled')}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {problem.nextRevisitDate ? 'Retention review scheduled' : 'Pick a date in the sidebar'}
+              {isFriendView
+                ? (problem.createdAt ? `Logged on ${new Date(problem.createdAt).toLocaleDateString()}` : 'Friend problem')
+                : (problem.nextRevisitDate ? 'Retention review scheduled' : 'Pick a date in the sidebar')}
             </Typography>
           </Paper>
         </Grid>
@@ -559,7 +642,7 @@ export default function ProblemAttempts() {
             </Collapse>
 
             {/* Blind Mode Callout Banner */}
-            {blindMode && (
+            {!isFriendView && blindMode && attempts.length > 0 && (
               <Paper
                 elevation={0}
                 sx={{
@@ -608,11 +691,13 @@ export default function ProblemAttempts() {
                   Attempt Timeline
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Chronological record of how your understanding developed.
+                  {isFriendView
+                    ? "Chronological history of your friend's problem solving attempts."
+                    : 'Chronological record of how your understanding developed.'}
                 </Typography>
               </div>
 
-              {!showNewAttemptForm && (
+              {!isFriendView && !showNewAttemptForm && (
                 <Button
                   size="small"
                   variant="outlined"
@@ -626,7 +711,7 @@ export default function ProblemAttempts() {
             </Box>
 
             {/* Attempt Cards List */}
-            {isAttemptsLoading ? (
+            {isDataLoading ? (
               <Box sx={{ textAlign: 'center', py: 8 }}>
                 <CircularProgress size={32} />
               </Box>
@@ -642,17 +727,22 @@ export default function ProblemAttempts() {
                   backgroundColor: '#FAFBFC',
                 }}
               >
+                <PsychologyAltIcon sx={{ fontSize: 36, color: '#94A3B8', mb: 1.5 }} />
                 <Typography variant="h6" sx={{ fontFamily: '"Space Grotesk", sans-serif', fontWeight: 600, mb: 1 }}>
-                  No attempts recorded yet
+                  {isFriendView ? 'No attempts logged yet' : 'No attempts recorded yet'}
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 400, mx: 'auto', mb: 3 }}>
-                  Log your first attempt above to track your reasoning, false starts, and time complexity.
+                <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 400, mx: 'auto', mb: isFriendView ? 0 : 3 }}>
+                  {isFriendView
+                    ? "This friend hasn't recorded any practice attempts for this problem yet."
+                    : 'Log your first attempt above to track your reasoning, false starts, and time complexity.'}
                 </Typography>
-                <Button variant="contained" startIcon={<AddIcon />} onClick={() => setShowNewAttemptForm(true)}>
-                  Log First Attempt
-                </Button>
+                {!isFriendView && (
+                  <Button variant="contained" startIcon={<AddIcon />} onClick={() => setShowNewAttemptForm(true)}>
+                    Log First Attempt
+                  </Button>
+                )}
               </Paper>
-            ) : blindMode ? (
+            ) : (!isFriendView && blindMode) ? (
               /* Blind Mode Hidden View */
               <Paper
                 elevation={0}
@@ -801,6 +891,53 @@ export default function ProblemAttempts() {
                         </Typography>
                       </Box>
                     )}
+
+                    {/* Solution Code */}
+                    {a.code && (
+                      <Box sx={{ mt: 2 }}>
+                        <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155', display: 'block', mb: 0.75 }}>
+                          Solution Code ({a.language || 'Code'})
+                        </Typography>
+                        <Paper
+                          elevation={0}
+                          sx={{
+                            p: 2,
+                            backgroundColor: '#0F172A',
+                            color: '#F8FAFC',
+                            borderRadius: 2,
+                            fontFamily: '"IBM Plex Mono", monospace',
+                            fontSize: '0.825rem',
+                            overflowX: 'auto',
+                            whiteSpace: 'pre',
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          <code>{a.code}</code>
+                        </Paper>
+                      </Box>
+                    )}
+
+                    {/* Mistake Tags */}
+                    {a.mistakeTags && (Array.isArray(a.mistakeTags) ? a.mistakeTags.length > 0 : (a.mistakeTags as any).size > 0) && (
+                      <Box sx={{ mt: 1.5 }}>
+                        <Typography variant="caption" sx={{ fontWeight: 700, color: '#64748B', display: 'block', mb: 0.5 }}>
+                          Mistake Tags:
+                        </Typography>
+                        <Stack direction="row" spacing={0.75} sx={{ flexWrap: 'wrap', gap: 0.75 }}>
+                          {Array.from(a.mistakeTags).map((tag: any) => {
+                            const name = typeof tag === 'string' ? tag : (tag.name || tag.id);
+                            return (
+                              <Chip
+                                key={name}
+                                label={name}
+                                size="small"
+                                sx={{ backgroundColor: '#F1F5F9', color: '#475569', fontSize: '0.725rem' }}
+                              />
+                            );
+                          })}
+                        </Stack>
+                      </Box>
+                    )}
                   </Paper>
                 ))}
               </Stack>
@@ -811,90 +948,142 @@ export default function ProblemAttempts() {
         {/* Right Column: Revisit & Settings Sidebar */}
         <Grid size={{ xs: 12, md: 4.5 }}>
           <Stack spacing={3} sx={{ position: { md: 'sticky' }, top: 84 }}>
-            {/* Revisit Scheduler Widget */}
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid #E3E6EF' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <RotateRightIcon sx={{ color: '#4F3FF0' }} />
-                <Typography variant="h6" sx={{ fontFamily: '"Space Grotesk", sans-serif', fontWeight: 700 }}>
-                  Revisit this Problem
-                </Typography>
-              </Box>
+            {!isFriendView ? (
+              <>
+                {/* Revisit Scheduler Widget */}
+                <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid #E3E6EF' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                    <RotateRightIcon sx={{ color: '#4F3FF0' }} />
+                    <Typography variant="h6" sx={{ fontFamily: '"Space Grotesk", sans-serif', fontWeight: 700 }}>
+                      Revisit this Problem
+                    </Typography>
+                  </Box>
 
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
-                Put this problem back on your queue to test retention when the pattern is ready to stick.
-              </Typography>
-
-              {scheduleSuccess && (
-                <Alert severity="success" sx={{ mb: 2, py: 0.5 }}>
-                  {scheduleSuccess}
-                </Alert>
-              )}
-
-              <Stack spacing={2}>
-                <Box>
-                  <Typography variant="caption" sx={{ fontWeight: 600, color: '#334155', mb: 0.75, display: 'block' }}>
-                    Select Target Date
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
+                    Put this problem back on your queue to test retention when the pattern is ready to stick.
                   </Typography>
-                  <TextField
-                    fullWidth
-                    type="date"
-                    size="small"
-                    value={revisitDate || problem.nextRevisitDate || ''}
-                    onChange={(e) => setRevisitDate(e.target.value)}
-                  />
+
+                  {scheduleSuccess && (
+                    <Alert severity="success" sx={{ mb: 2, py: 0.5 }}>
+                      {scheduleSuccess}
+                    </Alert>
+                  )}
+
+                  <Stack spacing={2}>
+                    <Box>
+                      <Typography variant="caption" sx={{ fontWeight: 600, color: '#334155', mb: 0.75, display: 'block' }}>
+                        Select Target Date
+                      </Typography>
+                      <TextField
+                        fullWidth
+                        type="date"
+                        size="small"
+                        value={revisitDate || problem.nextRevisitDate || ''}
+                        onChange={(e) => setRevisitDate(e.target.value)}
+                      />
+                    </Box>
+
+                    <Stack direction="row" spacing={1}>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        onClick={() => handleQuickScheduleDays(1)}
+                        sx={{ fontWeight: 600 }}
+                      >
+                        Tomorrow
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        onClick={() => handleQuickScheduleDays(7)}
+                        sx={{ fontWeight: 600 }}
+                      >
+                        In a week
+                      </Button>
+                    </Stack>
+
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      disabled={!revisitDate || scheduleMutation.isPending}
+                      onClick={() => scheduleMutation.mutate(revisitDate)}
+                      sx={{ fontWeight: 600, mt: 1 }}
+                    >
+                      {scheduleMutation.isPending ? 'Scheduling...' : 'Confirm Revisit Date'}
+                    </Button>
+                  </Stack>
+                </Paper>
+
+                {/* Blind Mode Toggle Card */}
+                <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid #E3E6EF' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#171A2B' }}>
+                        Blind Interview Mode
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Hides target complexity and past attempt notes.
+                      </Typography>
+                    </div>
+                    <Switch
+                      checked={blindMode}
+                      onChange={(e) => setBlindMode(e.target.checked)}
+                      color="primary"
+                    />
+                  </Box>
+                </Paper>
+              </>
+            ) : (
+              /* Friend Problem Summary Sidebar */
+              <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid #E3E6EF' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  <LockOutlinedIcon sx={{ color: '#4F3FF0' }} />
+                  <Typography variant="h6" sx={{ fontFamily: '"Space Grotesk", sans-serif', fontWeight: 700 }}>
+                    Friend Log Details
+                  </Typography>
                 </Box>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
+                  Viewing friend's attempt history in read-only mode.
+                </Typography>
 
-                <Stack direction="row" spacing={1}>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    fullWidth
-                    onClick={() => handleQuickScheduleDays(1)}
-                    sx={{ fontWeight: 600 }}
-                  >
-                    Tomorrow
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    fullWidth
-                    onClick={() => handleQuickScheduleDays(7)}
-                    sx={{ fontWeight: 600 }}
-                  >
-                    In a week
-                  </Button>
+                <Stack spacing={2}>
+                  <Box>
+                    <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>
+                      Primary Topic
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#171A2B' }}>
+                      {problem.primaryTopicName || 'General'}
+                    </Typography>
+                  </Box>
+
+                  {problem.extraTopicNames && problem.extraTopicNames.length > 0 && (
+                    <Box>
+                      <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600, mb: 0.5, display: 'block' }}>
+                        Secondary Topics
+                      </Typography>
+                      <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', gap: 0.5 }}>
+                        {problem.extraTopicNames.map((name) => (
+                          <Chip key={name} label={name} size="small" sx={{ fontSize: '0.75rem' }} />
+                        ))}
+                      </Stack>
+                    </Box>
+                  )}
+
+                  {problem.platform && (
+                    <Box>
+                      <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>
+                        Platform
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#171A2B' }}>
+                        {problem.platform}
+                      </Typography>
+                    </Box>
+                  )}
                 </Stack>
-
-                <Button
-                  variant="contained"
-                  fullWidth
-                  disabled={!revisitDate || scheduleMutation.isPending}
-                  onClick={() => scheduleMutation.mutate(revisitDate)}
-                  sx={{ fontWeight: 600, mt: 1 }}
-                >
-                  {scheduleMutation.isPending ? 'Scheduling...' : 'Confirm Revisit Date'}
-                </Button>
-              </Stack>
-            </Paper>
-
-            {/* Blind Mode Toggle Card */}
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid #E3E6EF' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#171A2B' }}>
-                    Blind Interview Mode
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Hides target complexity and past attempt notes.
-                  </Typography>
-                </div>
-                <Switch
-                  checked={blindMode}
-                  onChange={(e) => setBlindMode(e.target.checked)}
-                  color="primary"
-                />
-              </Box>
-            </Paper>
+              </Paper>
+            )}
 
             {/* Study Philosophy Callout */}
             <Paper

@@ -96,8 +96,9 @@ export default function FriendSummaryView() {
     );
   }
 
-  // Convert solvedProblems to Problem[] shape for reuse with ProblemList
-  const mappedProblems: Problem[] = (summary.solvedProblems || []).map((p) => ({
+  // Convert problems to Problem[] shape for reuse with ProblemList
+  const rawList = summary.problems || summary.solvedProblems || [];
+  const mappedProblems: Problem[] = rawList.map((p) => ({
     id: p.id,
     title: p.title,
     platform: p.platform,
@@ -199,8 +200,9 @@ export default function FriendSummaryView() {
       <ProblemList
         initialProblems={mappedProblems}
         readOnly={true}
-        headerTitle={`${summary.displayName}'s Solved Problems`}
-        headerSubtitle={`Displaying ${mappedProblems.length} solved algorithmic challenge${mappedProblems.length === 1 ? '' : 's'}.`}
+        friendUserId={friendUserId}
+        headerTitle={`${summary.displayName}'s Logged Problems`}
+        headerSubtitle={`Displaying ${mappedProblems.length} algorithmic challenge${mappedProblems.length === 1 ? '' : 's'}.`}
       />
     </Box>
   );

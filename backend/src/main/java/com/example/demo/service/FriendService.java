@@ -1,10 +1,14 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.*;
+import com.example.demo.model.Attempt;
 import com.example.demo.model.ConnectionStatus;
 import com.example.demo.model.FriendConnection;
+import com.example.demo.model.MistakeTag;
 import com.example.demo.model.Problem;
+import com.example.demo.model.Topic;
 import com.example.demo.model.User;
+import com.example.demo.repository.AttemptRepository;
 import com.example.demo.repository.FriendConnectionRepository;
 import com.example.demo.repository.ProblemRepository;
 import com.example.demo.repository.UserRepository;
@@ -31,6 +35,7 @@ public class FriendService {
     private final UserRepository userRepository;
     private final FriendConnectionRepository friendConnectionRepository;
     private final ProblemRepository problemRepository;
+    private final AttemptRepository attemptRepository;
     private final StatsService statsService;
 
     @Transactional
@@ -254,10 +259,9 @@ public class FriendService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: You are not accepted friends with this user");
         }
 
-        // Solved problems (filtered strictly to SOLVED / SOLVED_OPTIMALLY, no attempt details)
+        // Complete problem list of the friend (every status, regardless of solved/tried, no revision-scheduling fields)
         List<Problem> problems = problemRepository.findByUserIdWithTopics(friendUserId);
-        List<FriendSummaryProblemDto> solvedProblems = problems.stream()
-                .filter(p -> isSolvedStatus(p.getCurrentStatus()))
+        List<FriendSummaryProblemDto> problemDtos = problems.stream()
                 .sorted(Comparator.comparing(Problem::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
                 .map(p -> FriendSummaryProblemDto.builder()
                         .id(p.getId())
@@ -284,15 +288,82 @@ public class FriendService {
                 .friendUserId(friendUserId)
                 .displayName(displayName)
                 .email(friend.getEmail())
-                .solvedProblems(solvedProblems)
+                .problems(problemDtos)
+                .solvedProblems(problemDtos)
                 .heatmap(heatmap)
                 .build();
     }
 
-    private boolean isSolvedStatus(String status) {
-        if (status == null) return false;
-        String s = status.trim().toUpperCase().replace(" ", "_");
-        return "SOLVED".equals(s) || "SOLVED_OPTIMALLY".equals(s);
+    @Transactional(readOnly = true)
+    public FriendProblemDetailResponse getFriendProblemDetail(UUID callerId, UUID friendUserId, UUID problemId) {
+        User caller = userRepository.findById(callerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Caller not found"));
+        User friend = userRepository.findById(friendUserId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Friend user not found"));
+
+        // CORE AUTHORIZATION POINT:
+        // Must have an ACCEPTED friend connection between caller and friendUserId
+        Optional<FriendConnection> acceptedConn = friendConnectionRepository.findAcceptedConnectionBetweenUsers(caller, friend);
+        if (acceptedConn.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: You are not accepted friends with this user");
+        }
+
+        Problem problem = problemRepository.findById(problemId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Problem not found"));
+
+        if (problem.getUser() == null || !friendUserId.equals(problem.getUser().getId())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Problem does not belong to friend");
+        }
+
+        List<Attempt> attempts = attemptRepository.findByProblemIdAndUserIdOrderByAttemptedAtDesc(problemId, friendUserId);
+        List<AttemptResponse> attemptResponses = (attempts != null)
+                ? attempts.stream().map(this::mapAttemptToResponse).collect(Collectors.toList())
+                : Collections.emptyList();
+
+        Set<String> extraTopicNames = (problem.getExtraTopics() != null)
+                ? problem.getExtraTopics().stream().map(Topic::getName).collect(Collectors.toSet())
+                : Collections.emptySet();
+
+        return FriendProblemDetailResponse.builder()
+                .id(problem.getId())
+                .title(problem.getTitle())
+                .platform(problem.getPlatform())
+                .url(problem.getUrl())
+                .difficulty(problem.getDifficulty())
+                .primaryTopicId(problem.getPrimaryTopic() != null ? problem.getPrimaryTopic().getId() : null)
+                .primaryTopicName(problem.getPrimaryTopic() != null ? problem.getPrimaryTopic().getName() : "General")
+                .extraTopicNames(extraTopicNames)
+                .optimalTime(problem.getOptimalTime())
+                .optimalSpace(problem.getOptimalSpace())
+                .currentStatus(problem.getCurrentStatus())
+                .createdAt(problem.getCreatedAt())
+                .attempts(attemptResponses)
+                .build();
+    }
+
+    private AttemptResponse mapAttemptToResponse(Attempt attempt) {
+        Set<String> mistakeTags = (attempt.getMistakeTags() != null)
+                ? attempt.getMistakeTags().stream().map(MistakeTag::getName).collect(Collectors.toSet())
+                : Collections.emptySet();
+
+        return AttemptResponse.builder()
+                .id(attempt.getId())
+                .problemId(attempt.getProblem() != null ? attempt.getProblem().getId() : null)
+                .attemptedAt(attempt.getAttemptedAt())
+                .result(attempt.getResult())
+                .understood(attempt.isUnderstood())
+                .logicFound(attempt.isLogicFound())
+                .codeCompleted(attempt.isCodeCompleted())
+                .timeTakenMin(attempt.getTimeTakenMin())
+                .timeComplexity(attempt.getTimeComplexity())
+                .spaceComplexity(attempt.getSpaceComplexity())
+                .confidence(attempt.getConfidence())
+                .approach(attempt.getApproach())
+                .mistakes(attempt.getMistakes())
+                .code(attempt.getCode())
+                .language(attempt.getLanguage())
+                .mistakeTags(mistakeTags)
+                .build();
     }
 
     private String generateUniqueFriendCode() {

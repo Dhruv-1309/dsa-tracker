@@ -85,6 +85,16 @@ public class FriendController {
         return ResponseEntity.ok(friendService.getFriendSummary(callerId, friendUserId, year));
     }
 
+    @GetMapping("/{friendUserId}/problems/{problemId}")
+    public ResponseEntity<FriendProblemDetailResponse> getFriendProblemDetail(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable UUID friendUserId,
+            @PathVariable UUID problemId
+    ) {
+        UUID callerId = getAuthenticatedUserId(userDetails);
+        return ResponseEntity.ok(friendService.getFriendProblemDetail(callerId, friendUserId, problemId));
+    }
+
     private UUID getAuthenticatedUserId(CustomUserDetails userDetails) {
         if (userDetails == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthenticated");

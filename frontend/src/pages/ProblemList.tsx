@@ -46,6 +46,7 @@ export interface ProblemListProps {
   readOnly?: boolean;
   headerTitle?: string;
   headerSubtitle?: string;
+  friendUserId?: string;
 }
 
 export default function ProblemList({
@@ -53,6 +54,7 @@ export default function ProblemList({
   readOnly = false,
   headerTitle,
   headerSubtitle,
+  friendUserId,
 }: ProblemListProps = {}) {
   const fetchApi = useApiClient();
   const queryClient = useQueryClient();
@@ -686,7 +688,7 @@ const filterControlSx = {
                   {/* Title & Platform */}
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {readOnly ? (
+                      {readOnly && !friendUserId ? (
                         <Typography
                           sx={{
                             fontWeight: 600,
@@ -699,7 +701,7 @@ const filterControlSx = {
                       ) : (
                         <Link
                           component={RouterLink}
-                          to={`/problems/${p.id}/attempts`}
+                          to={friendUserId ? `/friends/${friendUserId}/problems/${p.id}` : `/problems/${p.id}/attempts`}
                           sx={{
                             fontWeight: 600,
                             color: COLOR_TOKENS.ink,

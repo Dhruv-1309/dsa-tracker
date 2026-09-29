@@ -16,14 +16,14 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping({"/api/v1/users", "/api/users"})
+@RequestMapping({"/api/v1/users", "/api/users", "/api/v1/user", "/api/user"})
 @RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
     private final com.example.demo.service.FriendService friendService;
 
-    @GetMapping("/me/friend-code")
+    @GetMapping({"/me/friend-code", "/friend-code"})
     public ResponseEntity<com.example.demo.dto.FriendCodeResponse> getFriendCode(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
@@ -34,7 +34,7 @@ public class UserController {
         return ResponseEntity.ok(friendService.getOrCreateFriendCode(userId));
     }
 
-    @PostMapping("/me/friend-code/regenerate")
+    @PostMapping({"/me/friend-code/regenerate", "/friend-code/regenerate"})
     public ResponseEntity<com.example.demo.dto.FriendCodeResponse> regenerateFriendCode(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {

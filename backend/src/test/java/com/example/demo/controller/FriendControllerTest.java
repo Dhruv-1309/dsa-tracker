@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.config.GlobalExceptionHandler;
 import com.example.demo.dto.FriendCodeResponse;
+import com.example.demo.dto.FriendProblemDetailResponse;
 import com.example.demo.dto.FriendRequestActionResponse;
 import com.example.demo.dto.FriendResponse;
 import com.example.demo.dto.FriendSummaryResponse;
@@ -129,6 +130,53 @@ class FriendControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.displayName").value("Friend Name"))
                 .andExpect(jsonPath("$.email").value("friend@example.com"));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/friends/{friendUserId}/problems/{problemId} returns 403 when not friends")
+    void getFriendProblemDetail_notFriends_returns403() throws Exception {
+        UUID friendId = UUID.randomUUID();
+        UUID problemId = UUID.randomUUID();
+        when(friendService.getFriendProblemDetail(eq(testUserId), eq(friendId), eq(problemId)))
+                .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: You are not accepted friends with this user"));
+
+        mockMvcWithAuth.perform(get("/api/v1/friends/" + friendId + "/problems/" + problemId))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/friends/{friendUserId}/problems/{problemId} returns 404 when problem not found")
+    void getFriendProblemDetail_problemNotFound_returns404() throws Exception {
+        UUID friendId = UUID.randomUUID();
+        UUID problemId = UUID.randomUUID();
+        when(friendService.getFriendProblemDetail(eq(testUserId), eq(friendId), eq(problemId)))
+                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Problem not found"));
+
+        mockMvcWithAuth.perform(get("/api/v1/friends/" + friendId + "/problems/" + problemId))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/friends/{friendUserId}/problems/{problemId} returns 200 with problem detail and attempts")
+    void getFriendProblemDetail_accepted_returnsDetail() throws Exception {
+        UUID friendId = UUID.randomUUID();
+        UUID problemId = UUID.randomUUID();
+        FriendProblemDetailResponse detail = FriendProblemDetailResponse.builder()
+                .id(problemId)
+                .title("Two Sum")
+                .platform("LeetCode")
+                .currentStatus("Solved")
+                .attempts(Collections.emptyList())
+                .build();
+
+        when(friendService.getFriendProblemDetail(eq(testUserId), eq(friendId), eq(problemId)))
+                .thenReturn(detail);
+
+        mockMvcWithAuth.perform(get("/api/v1/friends/" + friendId + "/problems/" + problemId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(problemId.toString()))
+                .andExpect(jsonPath("$.title").value("Two Sum"))
+                .andExpect(jsonPath("$.attempts").isArray());
     }
 
     @Test

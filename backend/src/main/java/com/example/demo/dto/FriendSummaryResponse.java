@@ -16,6 +16,7 @@ public class FriendSummaryResponse {
     private UUID friendUserId;
     private String displayName;
     private String email;
+    private List<FriendSummaryProblemDto> problems;
     private List<FriendSummaryProblemDto> solvedProblems;
     private List<HeatmapEntry> heatmap;
 }
