@@ -170,6 +170,32 @@ export default function ProblemList({
     },
   });
 
+const COLOR_TOKENS = {
+  ink: '#171A2B',        // Primary text, titles, headings
+  slate: '#475569',      // Secondary labels, topic chips
+  muted: '#64748B',      // Captions, table headers, reset actions
+  subtle: '#94A3B8',     // Input icons, placeholders
+  accent: '#4F3FF0',     // Primary brand links & buttons
+  accentHover: '#3E30D6',
+  success: '#047857',    // Consolidated green: Easy badge, Solved status, Solved date
+  warning: '#92400E',    // Consolidated amber: Medium badge, Tried status
+  danger: '#991B1B',     // Consolidated red: Hard badge, Delete hover
+  purple: '#5B21B6',     // Consolidated purple: Could not solve status
+};
+
+const RADIUS = {
+  container: 2, // 16px for Papers and TableContainers
+  control: 1.5, // 12px for Buttons and Alerts
+  sm: 1,        // 8px for Inputs
+};
+
+const filterControlSx = {
+  '& .MuiOutlinedInput-root': {
+    height: 40,
+    borderRadius: RADIUS.control,
+  },
+};
+
   const handleDelete = (id: string, title: string) => {
     if (window.confirm(`Are you sure you want to delete "${title}"?`)) {
       deleteMutation.mutate(id);
@@ -185,7 +211,7 @@ export default function ProblemList({
             size="small"
             sx={{
               backgroundColor: '#DEF7EC',
-              color: '#03543F',
+              color: COLOR_TOKENS.success,
               fontWeight: 600,
               fontSize: '0.75rem',
               border: '1px solid #BCF0DA',
@@ -199,7 +225,7 @@ export default function ProblemList({
             size="small"
             sx={{
               backgroundColor: '#FEF3C7',
-              color: '#92400E',
+              color: COLOR_TOKENS.warning,
               fontWeight: 600,
               fontSize: '0.75rem',
               border: '1px solid #FDE68A',
@@ -213,7 +239,7 @@ export default function ProblemList({
             size="small"
             sx={{
               backgroundColor: '#FDECEC',
-              color: '#9B1C1C',
+              color: COLOR_TOKENS.danger,
               fontWeight: 600,
               fontSize: '0.75rem',
               border: '1px solid #F8B4B4',
@@ -233,15 +259,15 @@ export default function ProblemList({
       ? '#F59E0B'
       : st === 'Could not solve'
       ? '#8B7FF5'
-      : '#94A3B8';
+      : COLOR_TOKENS.subtle;
 
     const textColor = isSolved
-      ? '#065F46'
+      ? COLOR_TOKENS.success
       : st === 'Tried'
-      ? '#92400E'
+      ? COLOR_TOKENS.warning
       : st === 'Could not solve'
-      ? '#5B21B6'
-      : '#475569';
+      ? COLOR_TOKENS.purple
+      : COLOR_TOKENS.slate;
 
     return (
       <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}>
@@ -339,7 +365,7 @@ export default function ProblemList({
               px: 2.5,
               py: 1,
               fontWeight: 600,
-              borderRadius: 2.5,
+              borderRadius: RADIUS.control,
               alignSelf: { xs: 'stretch', sm: 'auto' },
             }}
           >
@@ -354,12 +380,24 @@ export default function ProblemList({
         sx={{
           p: 2.5,
           mb: 3,
-          borderRadius: 3,
+          borderRadius: RADIUS.container,
           border: '1px solid #E3E6EF',
           backgroundColor: '#FFFFFF',
         }}
       >
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ alignItems: 'center' }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: '1fr 1fr',
+              md: '2fr 1.2fr 1fr 1.2fr',
+            },
+            gap: 2,
+            alignItems: 'center',
+            width: '100%',
+          }}
+        >
           <TextField
             placeholder="Search problems by name or keyword..."
             value={search}
@@ -369,17 +407,19 @@ export default function ProblemList({
             }}
             size="small"
             fullWidth
+            sx={filterControlSx}
             slotProps={{
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon sx={{ color: '#94A3B8' }} />
+                    <SearchIcon sx={{ color: COLOR_TOKENS.subtle }} />
                   </InputAdornment>
                 ),
                 endAdornment: search ? (
                   <InputAdornment position="end">
                     <IconButton
                       size="small"
+                      aria-label="Clear search"
                       onClick={() => {
                         setSearch('');
                         updateFilterParam('search', '');
@@ -401,18 +441,20 @@ export default function ProblemList({
               updateFilterParam('topic', e.target.value);
             }}
             size="small"
-            sx={{ width: { xs: '100%', md: 220 } }}
+            fullWidth
+            sx={filterControlSx}
             slotProps={{
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
-                    <FilterListIcon sx={{ color: '#94A3B8', fontSize: 18 }} />
+                    <FilterListIcon sx={{ color: COLOR_TOKENS.subtle, fontSize: 18 }} />
                   </InputAdornment>
                 ),
                 endAdornment: topic ? (
                   <InputAdornment position="end">
                     <IconButton
                       size="small"
+                      aria-label="Clear topic filter"
                       onClick={() => {
                         setTopic('');
                         updateFilterParam('topic', '');
@@ -426,7 +468,7 @@ export default function ProblemList({
             }}
           />
 
-          <FormControl size="small" sx={{ width: { xs: '100%', md: 190 } }}>
+          <FormControl size="small" fullWidth sx={filterControlSx}>
             <InputLabel id="status-label">Status</InputLabel>
             <Select
               labelId="status-label"
@@ -448,7 +490,7 @@ export default function ProblemList({
             </Select>
           </FormControl>
 
-          <FormControl size="small" sx={{ width: { xs: '100%', md: 210 } }}>
+          <FormControl size="small" fullWidth sx={filterControlSx}>
             <InputLabel id="sort-label">Sort By</InputLabel>
             <Select
               labelId="sort-label"
@@ -466,7 +508,7 @@ export default function ProblemList({
               <MenuItem value="difficulty">Difficulty (Hard to Easy)</MenuItem>
             </Select>
           </FormControl>
-        </Stack>
+        </Box>
 
         {hasActiveFilters && (
           <Stack
@@ -561,7 +603,7 @@ export default function ProblemList({
           </Typography>
         </Box>
       ) : error ? (
-        <Alert severity="error" sx={{ borderRadius: 2 }}>
+        <Alert severity="error" sx={{ borderRadius: RADIUS.control }}>
           Error loading problems. Please refresh the page.
         </Alert>
       ) : sortedProblems.length === 0 ? (
@@ -571,14 +613,14 @@ export default function ProblemList({
             py: 8,
             px: 3,
             textAlign: 'center',
-            borderRadius: 3,
+            borderRadius: RADIUS.container,
             border: '1.5px dashed #E3E6EF',
             backgroundColor: '#FAFBFC',
           }}
         >
           <Typography
             variant="h6"
-            sx={{ fontFamily: '"Space Grotesk", sans-serif', fontWeight: 600, mb: 1, color: '#171A2B' }}
+            sx={{ fontFamily: '"Space Grotesk", sans-serif', fontWeight: 600, mb: 1, color: COLOR_TOKENS.ink }}
           >
             {hasActiveFilters
               ? 'No matching problems found'
@@ -594,7 +636,7 @@ export default function ProblemList({
               : 'Add your first algorithm problem to schedule automated spaced-repetition revisits.'}
           </Typography>
           {hasActiveFilters ? (
-            <Button variant="outlined" onClick={resetFilters}>
+            <Button variant="outlined" onClick={resetFilters} sx={{ borderRadius: RADIUS.control }}>
               Clear All Filters
             </Button>
           ) : !readOnly ? (
@@ -603,7 +645,7 @@ export default function ProblemList({
               to="/problems/new"
               variant="contained"
               startIcon={<AddIcon />}
-              sx={{ borderRadius: 2.5 }}
+              sx={{ borderRadius: RADIUS.control }}
             >
               Log First Problem
             </Button>
@@ -614,7 +656,7 @@ export default function ProblemList({
           component={Paper}
           elevation={0}
           sx={{
-            borderRadius: 3,
+            borderRadius: RADIUS.container,
             border: '1px solid #E3E6EF',
             overflow: 'hidden',
             position: 'relative',
@@ -630,20 +672,20 @@ export default function ProblemList({
                 height: 3,
                 zIndex: 2,
                 backgroundColor: 'transparent',
-                '& .MuiLinearProgress-bar': { backgroundColor: '#4F3FF0' },
+                '& .MuiLinearProgress-bar': { backgroundColor: COLOR_TOKENS.accent },
               }}
             />
           )}
           <Table sx={{ minWidth: 720 }}>
             <TableHead>
               <TableRow>
-                <TableCell>Problem Title</TableCell>
-                <TableCell>Topic</TableCell>
-                <TableCell>Difficulty</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Date</TableCell>
-                {!readOnly && <TableCell>Next Revisit</TableCell>}
-                {!readOnly && <TableCell align="right">Actions</TableCell>}
+                <TableCell sx={{ width: '33%', fontWeight: 600, color: COLOR_TOKENS.muted }}>Problem Title</TableCell>
+                <TableCell sx={{ width: '13%', fontWeight: 600, color: COLOR_TOKENS.muted }}>Topic</TableCell>
+                <TableCell sx={{ width: '11%', fontWeight: 600, color: COLOR_TOKENS.muted }}>Difficulty</TableCell>
+                <TableCell sx={{ width: '14%', fontWeight: 600, color: COLOR_TOKENS.muted }}>Status</TableCell>
+                <TableCell sx={{ width: '13%', fontWeight: 600, color: COLOR_TOKENS.muted }}>Date</TableCell>
+                {!readOnly && <TableCell sx={{ width: '16%', fontWeight: 600, color: COLOR_TOKENS.muted }}>Next Revisit</TableCell>}
+                {!readOnly && <TableCell align="right" sx={{ width: 'auto', fontWeight: 600, color: COLOR_TOKENS.muted }}>Actions</TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -652,9 +694,10 @@ export default function ProblemList({
                   key={p.id}
                   hover
                   sx={{
-                    transition: 'background-color 0.15s ease',
+                    transition: 'background-color 0.15s ease, box-shadow 0.15s ease',
                     '&:hover': {
                       backgroundColor: '#F8FAFC !important',
+                      boxShadow: `inset 3px 0 0 ${COLOR_TOKENS.accent}`,
                     },
                   }}
                 >
@@ -665,7 +708,7 @@ export default function ProblemList({
                         <Typography
                           sx={{
                             fontWeight: 600,
-                            color: '#171A2B',
+                            color: COLOR_TOKENS.ink,
                             fontSize: '0.925rem',
                           }}
                         >
@@ -677,11 +720,11 @@ export default function ProblemList({
                           to={`/problems/${p.id}/attempts`}
                           sx={{
                             fontWeight: 600,
-                            color: '#171A2B',
+                            color: COLOR_TOKENS.ink,
                             textDecoration: 'none',
                             fontSize: '0.925rem',
                             '&:hover': {
-                              color: '#4F3FF0',
+                              color: COLOR_TOKENS.accent,
                               textDecoration: 'underline',
                             },
                           }}
@@ -697,7 +740,8 @@ export default function ProblemList({
                             href={sanitizeUrl(p.url)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            sx={{ color: '#94A3B8', p: 0.5, '&:hover': { color: '#4F3FF0' } }}
+                            aria-label={`Open ${p.title} on platform`}
+                            sx={{ color: COLOR_TOKENS.subtle, p: 0.5, '&:hover': { color: COLOR_TOKENS.accent } }}
                           >
                             <OpenInNewIcon sx={{ fontSize: 14 }} />
                           </IconButton>
@@ -705,7 +749,7 @@ export default function ProblemList({
                       )}
                     </Box>
                     {p.platform && (
-                      <Typography variant="caption" sx={{ color: '#94A3B8', display: 'block', mt: 0.25 }}>
+                      <Typography variant="caption" sx={{ color: COLOR_TOKENS.subtle, display: 'block', mt: 0.25 }}>
                         {p.platform}
                       </Typography>
                     )}
@@ -718,7 +762,7 @@ export default function ProblemList({
                       size="small"
                       sx={{
                         backgroundColor: '#F1F5F9',
-                        color: '#334155',
+                        color: COLOR_TOKENS.slate,
                         fontWeight: 500,
                         fontSize: '0.75rem',
                       }}
@@ -731,35 +775,26 @@ export default function ProblemList({
                   {/* Status */}
                   <TableCell>{getStatusChip(p.currentStatus)}</TableCell>
 
-                  {/* Date (Solved or Logged) */}
+                  {/* Date (Clean single line, no redundant status subtext) */}
                   <TableCell>
                     <Typography
                       variant="body2"
                       sx={{
                         fontFamily: '"IBM Plex Mono", monospace',
                         fontSize: '0.8rem',
-                        fontWeight: 600,
-                        color: p.lastSuccessfulAt ? '#047857' : '#475569',
+                        fontWeight: 500,
+                        color: COLOR_TOKENS.slate,
                       }}
                     >
-                      {p.lastSuccessfulAt
-                        ? new Date(p.lastSuccessfulAt).toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })
-                        : new Date(p.createdAt).toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: '#94A3B8', display: 'block', fontSize: '0.7rem' }}>
-                      {p.lastSuccessfulAt ? 'Solved' : 'Logged'}
+                      {new Date(p.lastSuccessfulAt || p.createdAt).toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
                     </Typography>
                   </TableCell>
 
-                  {/* Next Revisit */}
+                  {/* Next Revisit (Accessible contrast and weight) */}
                   {!readOnly && (
                     <TableCell>
                       <Typography
@@ -767,7 +802,8 @@ export default function ProblemList({
                         sx={{
                           fontFamily: '"IBM Plex Mono", monospace',
                           fontSize: '0.8rem',
-                          color: p.nextRevisitDate ? '#171A2B' : '#94A3B8',
+                          fontWeight: 500,
+                          color: p.nextRevisitDate ? COLOR_TOKENS.ink : COLOR_TOKENS.muted,
                         }}
                       >
                         {p.nextRevisitDate || 'Unscheduled'}
@@ -775,23 +811,32 @@ export default function ProblemList({
                     </TableCell>
                   )}
 
-                  {/* Actions */}
+                  {/* Actions (Solid primary CTA, subtle secondary icons) */}
                   {!readOnly && (
                     <TableCell align="right">
                       <Stack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
                         <Tooltip title="Attempt Problem (Blind Mode)" arrow>
                           <Button
                             size="small"
-                            variant="outlined"
-                            color="primary"
-                            startIcon={<PlayArrowOutlinedIcon sx={{ fontSize: 16 }} />}
+                            variant="contained"
+                            disableElevation
+                            startIcon={<PlayArrowOutlinedIcon sx={{ fontSize: 15 }} />}
                             onClick={() => navigate(`/problems/${p.id}/attempts`)}
+                            aria-label={`Attempt ${p.title} in blind mode`}
                             sx={{
                               px: 1.5,
-                              py: 0.4,
-                              fontSize: '0.775rem',
+                              py: 0.45,
+                              fontSize: '0.75rem',
                               fontWeight: 600,
-                              borderRadius: 2,
+                              borderRadius: RADIUS.control,
+                              backgroundColor: COLOR_TOKENS.accent,
+                              color: '#FFFFFF',
+                              textTransform: 'none',
+                              boxShadow: 'none',
+                              '&:hover': {
+                                backgroundColor: COLOR_TOKENS.accentHover,
+                                boxShadow: 'none',
+                              },
                             }}
                           >
                             Attempt
@@ -801,8 +846,9 @@ export default function ProblemList({
                         <Tooltip title="Edit Problem Details" arrow>
                           <IconButton
                             size="small"
+                            aria-label={`Edit ${p.title}`}
                             onClick={() => navigate(`/problems/${p.id}/edit`)}
-                            sx={{ color: '#64748B', '&:hover': { color: '#4F3FF0' } }}
+                            sx={{ color: COLOR_TOKENS.muted, '&:hover': { color: COLOR_TOKENS.accent } }}
                           >
                             <EditOutlinedIcon sx={{ fontSize: 18 }} />
                           </IconButton>
@@ -811,9 +857,10 @@ export default function ProblemList({
                         <Tooltip title="Delete Problem" arrow>
                           <IconButton
                             size="small"
+                            aria-label={`Delete ${p.title}`}
                             onClick={() => handleDelete(p.id, p.title)}
                             disabled={deleteMutation.isPending}
-                            sx={{ color: '#64748B', '&:hover': { color: '#DC2626' } }}
+                            sx={{ color: COLOR_TOKENS.muted, '&:hover': { color: COLOR_TOKENS.danger } }}
                           >
                             <DeleteOutlinedIcon sx={{ fontSize: 18 }} />
                           </IconButton>
