@@ -162,7 +162,6 @@ class FriendServiceTest {
         assertNotNull(response);
         assertEquals(userBId, response.getFriendUserId());
         assertEquals("Bob", response.getDisplayName());
-        assertEquals("bob@example.com", response.getEmail());
         // All problems (solved + tried) returned in both problems and solvedProblems
         assertEquals(2, response.getProblems().size());
         assertEquals(2, response.getSolvedProblems().size());

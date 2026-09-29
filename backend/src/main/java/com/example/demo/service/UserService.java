@@ -25,6 +25,7 @@ public class UserService {
     private final AttemptRepository attemptRepository;
     private final TopicRepository topicRepository;
     private final MistakeTagRepository mistakeTagRepository;
+    private final FriendConnectionRepository friendConnectionRepository;
     private final PasswordEncoder passwordEncoder;
 
     public UserProfileResponse getProfile(UUID userId) {
@@ -75,10 +76,13 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        // 1. Delete all attempts associated with user
+        // 1. Delete all friend connections associated with user
+        friendConnectionRepository.deleteByUserId(userId);
+
+        // 2. Delete all attempts associated with user
         attemptRepository.deleteByUserId(userId);
 
-        // 2. Clear many-to-many topic associations and delete all problems
+        // 3. Clear many-to-many topic associations and delete all problems
         List<Problem> problems = problemRepository.findByUserId(userId);
         for (Problem problem : problems) {
             problem.getExtraTopics().clear();
@@ -86,11 +90,11 @@ public class UserService {
         problemRepository.saveAll(problems);
         problemRepository.deleteAll(problems);
 
-        // 3. Delete any user-created custom mistake tags and topics
+        // 4. Delete any user-created custom mistake tags and topics
         mistakeTagRepository.deleteByUserId(userId);
         topicRepository.deleteByUserId(userId);
 
-        // 4. Delete the user account record
+        // 5. Delete the user account record
         userRepository.delete(user);
     }
 }

@@ -16,6 +16,5 @@ public class IncomingFriendRequestResponse {
     private UUID id;
     private UUID requesterId;
     private String requesterName;
-    private String requesterEmail;
     private LocalDateTime createdAt;
 }

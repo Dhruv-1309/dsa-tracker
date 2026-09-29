@@ -10,7 +10,6 @@ export interface FriendRequest {
   id: string;
   requesterId: string;
   requesterName: string;
-  requesterEmail: string;
   createdAt: string;
 }
 
@@ -18,7 +17,6 @@ export interface Friend {
   id: string;
   friendUserId: string;
   displayName: string;
-  email: string;
   respondedAt: string;
 }
 
@@ -35,7 +33,6 @@ export interface FriendSummaryProblem {
 export interface FriendSummaryResponse {
   friendUserId: string;
   displayName: string;
-  email: string;
   problems?: FriendSummaryProblem[];
   solvedProblems?: FriendSummaryProblem[];
   heatmap: HeatmapEntry[];

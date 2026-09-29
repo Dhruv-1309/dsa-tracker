@@ -16,6 +16,5 @@ public class FriendResponse {
     private UUID id;
     private UUID friendUserId;
     private String displayName;
-    private String email;
     private LocalDateTime respondedAt;
 }

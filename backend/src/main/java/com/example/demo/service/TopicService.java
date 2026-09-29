@@ -41,8 +41,9 @@ public class TopicService {
     @Transactional
     public TopicResponse createTopic(TopicRequest request, UUID userId) {
         User user = userRepository.findById(userId).orElseThrow();
+        String name = request.getName() != null ? request.getName().trim() : "";
         Topic topic = Topic.builder()
-                .name(request.getName())
+                .name(name)
                 .user(user)
                 .isSystem(false)
                 .sortOrder(999)

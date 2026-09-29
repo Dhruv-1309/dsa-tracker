@@ -118,7 +118,6 @@ class FriendControllerTest {
         FriendSummaryResponse response = FriendSummaryResponse.builder()
                 .friendUserId(friendId)
                 .displayName("Friend Name")
-                .email("friend@example.com")
                 .solvedProblems(Collections.emptyList())
                 .heatmap(Collections.emptyList())
                 .build();
@@ -129,7 +128,7 @@ class FriendControllerTest {
         mockMvcWithAuth.perform(get("/api/v1/friends/" + friendId + "/summary"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.displayName").value("Friend Name"))
-                .andExpect(jsonPath("$.email").value("friend@example.com"));
+                .andExpect(jsonPath("$.email").doesNotExist());
     }
 
     @Test

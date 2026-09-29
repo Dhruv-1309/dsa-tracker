@@ -150,7 +150,6 @@ public class FriendService {
                     .id(conn.getId())
                     .requesterId(requester.getId())
                     .requesterName(name)
-                    .requesterEmail(requester.getEmail())
                     .createdAt(conn.getCreatedAt())
                     .build();
         }).collect(Collectors.toList());
@@ -219,7 +218,6 @@ public class FriendService {
                     .id(conn.getId())
                     .friendUserId(friend.getId())
                     .displayName(name)
-                    .email(friend.getEmail())
                     .respondedAt(conn.getRespondedAt() != null ? conn.getRespondedAt() : conn.getCreatedAt())
                     .build();
         }).collect(Collectors.toList());
@@ -287,7 +285,6 @@ public class FriendService {
         return FriendSummaryResponse.builder()
                 .friendUserId(friendUserId)
                 .displayName(displayName)
-                .email(friend.getEmail())
                 .problems(problemDtos)
                 .solvedProblems(problemDtos)
                 .heatmap(heatmap)

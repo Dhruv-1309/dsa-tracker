@@ -4,6 +4,7 @@ import com.example.demo.dto.TopicRequest;
 import com.example.demo.dto.TopicResponse;
 import com.example.demo.security.CustomUserDetails;
 import com.example.demo.service.TopicService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,7 +30,7 @@ public class TopicController {
 
     @PostMapping
     public ResponseEntity<TopicResponse> createTopic(
-            @RequestBody TopicRequest request,
+            @Valid @RequestBody TopicRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         UUID userId = UUID.fromString(userDetails.getId());

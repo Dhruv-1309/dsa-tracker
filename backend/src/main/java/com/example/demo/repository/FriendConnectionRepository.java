@@ -43,4 +43,8 @@ public interface FriendConnectionRepository extends JpaRepository<FriendConnecti
            "WHERE ((c.userA = :u1 AND c.userB = :u2) OR (c.userA = :u2 AND c.userB = :u1)) " +
            "AND c.status = com.example.demo.model.ConnectionStatus.ACCEPTED")
     Optional<FriendConnection> findAcceptedConnectionBetweenUsers(@Param("u1") User u1, @Param("u2") User u2);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("DELETE FROM FriendConnection c WHERE c.userA.id = :userId OR c.userB.id = :userId")
+    void deleteByUserId(@Param("userId") UUID userId);
 }
