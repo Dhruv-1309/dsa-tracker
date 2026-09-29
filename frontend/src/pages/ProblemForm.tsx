@@ -24,6 +24,9 @@ import {
   InputAdornment,
   Divider,
   Autocomplete,
+  Switch,
+  FormControlLabel,
+  Collapse,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
@@ -116,7 +119,7 @@ export default function ProblemForm() {
   const [optimalSpace, setOptimalSpace] = useState('O(1)');
 
   // Attempt state (for new problem pass)
-  const logFirstAttempt = true;
+  const [logFirstAttempt, setLogFirstAttempt] = useState(true);
   const [result, setResult] = useState<'Solved' | 'Tried' | 'Could not solve'>('Solved');
   const [confidence, setConfidence] = useState<number>(4);
   const [timeTakenMin, setTimeTakenMin] = useState<number>(30);
@@ -306,7 +309,13 @@ export default function ProblemForm() {
 
         queryClient.invalidateQueries({ queryKey: ['problems'] });
         queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-        navigate(`/problems/${createdProblem.id}/attempts`);
+        queryClient.invalidateQueries({ queryKey: ['statsSummary'] });
+
+        if (logFirstAttempt) {
+          navigate(`/problems/${createdProblem.id}/attempts`);
+        } else {
+          navigate('/problems');
+        }
       }
     } catch (err: unknown) {
       setFormError(err instanceof Error ? err.message : 'An unexpected error occurred while saving.');
@@ -574,8 +583,25 @@ export default function ProblemForm() {
 
               {/* Section 2: First Attempt (Only when creating a problem) */}
               {!isEdit && (
-                <Paper elevation={0} sx={{ p: 3.5, borderRadius: 3, border: '1px solid #E3E6EF' }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 3.5,
+                    borderRadius: 3,
+                    border: '1px solid #E3E6EF',
+                    backgroundColor: '#FFFFFF',
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: { xs: 'flex-start', sm: 'center' },
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      gap: 1.5,
+                      mb: logFirstAttempt ? 2.5 : 0,
+                    }}
+                  >
                     <div>
                       <Typography
                         variant="h6"
@@ -588,89 +614,109 @@ export default function ProblemForm() {
                         First Attempt Reasoning
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Capture your intuition while the problem is fresh in mind.
+                        {logFirstAttempt
+                          ? 'Capture your intuition while the problem is fresh in mind.'
+                          : 'Save directly to your backlog with status "Not Attempted" to solve later.'}
                       </Typography>
                     </div>
+
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={logFirstAttempt}
+                          onChange={(e) => setLogFirstAttempt(e.target.checked)}
+                          color="primary"
+                        />
+                      }
+                      label={
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#334155' }}>
+                          {logFirstAttempt ? 'Log practice attempt now' : 'Save to backlog (Not attempted yet)'}
+                        </Typography>
+                      }
+                      sx={{ m: 0 }}
+                    />
                   </Box>
 
-                  <Stack spacing={2.5} sx={{ mt: 2 }}>
-                    <Grid container spacing={2}>
-                      <Grid size={{ xs: 12, sm: 5 }}>
-                        <Typography variant="caption" sx={{ fontWeight: 600, color: '#334155', mb: 0.75, display: 'block' }}>
-                          Outcome Result
-                        </Typography>
-                        <FormControl fullWidth size="small">
-                          <Select
-                            value={result}
-                            onChange={(e) => setResult(e.target.value as 'Solved' | 'Tried' | 'Could not solve')}
-                          >
-                            <MenuItem value="Solved">Solved</MenuItem>
-                            <MenuItem value="Tried">Tried (Partial)</MenuItem>
-                            <MenuItem value="Could not solve">Could not solve (Stuck)</MenuItem>
-                          </Select>
-                        </FormControl>
+                  <Collapse in={logFirstAttempt} unmountOnExit>
+                    <Stack spacing={2.5} sx={{ mt: 2 }}>
+                      <Grid container spacing={2}>
+                        <Grid size={{ xs: 12, sm: 5 }}>
+                          <Typography variant="caption" sx={{ fontWeight: 600, color: '#334155', mb: 0.75, display: 'block' }}>
+                            Outcome Result
+                          </Typography>
+                          <FormControl fullWidth size="small">
+                            <Select
+                              value={result}
+                              onChange={(e) => setResult(e.target.value as 'Solved' | 'Tried' | 'Could not solve')}
+                            >
+                              <MenuItem value="Solved">Solved</MenuItem>
+                              <MenuItem value="Tried">Tried (Partial)</MenuItem>
+                              <MenuItem value="Could not solve">Could not solve (Stuck)</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </Grid>
+
+                        <Grid size={{ xs: 12, sm: 7 }}>
+                          <Typography variant="caption" sx={{ fontWeight: 600, color: '#334155', mb: 0.75, display: 'block' }}>
+                            Confidence Level
+                          </Typography>
+                          <FormControl fullWidth size="small">
+                            <Select
+                              value={confidence}
+                              onChange={(e) => setConfidence(Number(e.target.value))}
+                            >
+                              {CONFIDENCE_OPTIONS.map((opt) => (
+                                <MenuItem key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </Grid>
                       </Grid>
 
-                      <Grid size={{ xs: 12, sm: 7 }}>
+                      <Box>
                         <Typography variant="caption" sx={{ fontWeight: 600, color: '#334155', mb: 0.75, display: 'block' }}>
-                          Confidence Level
+                          How did you approach it?
                         </Typography>
-                        <FormControl fullWidth size="small">
-                          <Select
-                            value={confidence}
-                            onChange={(e) => setConfidence(Number(e.target.value))}
-                          >
-                            {CONFIDENCE_OPTIONS.map((opt) => (
-                              <MenuItem key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                    </Grid>
+                        <TextField
+                          fullWidth
+                          multiline
+                          rows={3}
+                          placeholder="What did you notice first? Which invariant or data structure guided your solution?"
+                          value={approach}
+                          onChange={(e) => setApproach(e.target.value)}
+                        />
+                      </Box>
 
-                    <Box>
-                      <Typography variant="caption" sx={{ fontWeight: 600, color: '#334155', mb: 0.75, display: 'block' }}>
-                        How did you approach it?
-                      </Typography>
-                      <TextField
-                        fullWidth
-                        multiline
-                        rows={3}
-                        placeholder="What did you notice first? Which invariant or data structure guided your solution?"
-                        value={approach}
-                        onChange={(e) => setApproach(e.target.value)}
-                      />
-                    </Box>
+                      <Box>
+                        <Typography variant="caption" sx={{ fontWeight: 600, color: '#334155', mb: 0.75, display: 'block' }}>
+                          What got in the way? (Mistakes & false starts)
+                        </Typography>
+                        <TextField
+                          fullWidth
+                          multiline
+                          rows={2}
+                          placeholder="Name the specific false start or edge case (e.g. forgot boundary condition, wrong window shrink)."
+                          value={mistakes}
+                          onChange={(e) => setMistakes(e.target.value)}
+                        />
+                      </Box>
 
-                    <Box>
-                      <Typography variant="caption" sx={{ fontWeight: 600, color: '#334155', mb: 0.75, display: 'block' }}>
-                        What got in the way? (Mistakes & false starts)
-                      </Typography>
-                      <TextField
-                        fullWidth
-                        multiline
-                        rows={2}
-                        placeholder="Name the specific false start or edge case (e.g. forgot boundary condition, wrong window shrink)."
-                        value={mistakes}
-                        onChange={(e) => setMistakes(e.target.value)}
-                      />
-                    </Box>
-
-                    <Box>
-                      <Typography variant="caption" sx={{ fontWeight: 600, color: '#334155', mb: 0.75, display: 'block' }}>
-                        Mistake Tags <span style={{ fontWeight: 400, color: '#64748B' }}>(comma-separated)</span>
-                      </Typography>
-                      <TextField
-                        fullWidth
-                        placeholder="off-by-one, greedy choice failure, memory limit"
-                        value={mistakeTagsText}
-                        onChange={(e) => setMistakeTagsText(e.target.value)}
-                        size="small"
-                      />
-                    </Box>
-                  </Stack>
+                      <Box>
+                        <Typography variant="caption" sx={{ fontWeight: 600, color: '#334155', mb: 0.75, display: 'block' }}>
+                          Mistake Tags <span style={{ fontWeight: 400, color: '#64748B' }}>(comma-separated)</span>
+                        </Typography>
+                        <TextField
+                          fullWidth
+                          placeholder="off-by-one, greedy choice failure, memory limit"
+                          value={mistakeTagsText}
+                          onChange={(e) => setMistakeTagsText(e.target.value)}
+                          size="small"
+                        />
+                      </Box>
+                    </Stack>
+                  </Collapse>
                 </Paper>
               )}
             </Stack>
@@ -697,7 +743,7 @@ export default function ProblemForm() {
                   mb: 2.5,
                 }}
               >
-                Complexity & Revisit
+                {!isEdit && !logFirstAttempt ? 'Target Complexity' : 'Complexity & Revisit'}
               </Typography>
 
               <Stack spacing={2.5}>
@@ -730,95 +776,97 @@ export default function ProblemForm() {
                 </Grid>
 
                 {!isEdit && (
-                  <>
-                    <Grid container spacing={2}>
-                      <Grid size={{ xs: 6 }}>
+                  <Collapse in={logFirstAttempt} unmountOnExit>
+                    <Stack spacing={2.5}>
+                      <Grid container spacing={2}>
+                        <Grid size={{ xs: 6 }}>
+                          <Typography variant="caption" sx={{ fontWeight: 600, color: '#334155', mb: 0.75, display: 'block' }}>
+                            Time Taken (min)
+                          </Typography>
+                          <TextField
+                            fullWidth
+                            type="number"
+                            value={timeTakenMin}
+                            onChange={(e) => setTimeTakenMin(Number(e.target.value))}
+                            size="small"
+                            slotProps={{
+                              input: {
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <TimerOutlinedIcon sx={{ fontSize: 16, color: '#94A3B8' }} />
+                                  </InputAdornment>
+                                ),
+                              },
+                            }}
+                          />
+                        </Grid>
+
+                        <Grid size={{ xs: 6 }}>
+                          <Typography variant="caption" sx={{ fontWeight: 600, color: '#334155', mb: 0.75, display: 'block' }}>
+                            Language
+                          </Typography>
+                          <FormControl fullWidth size="small">
+                            <Select
+                              value={language}
+                              onChange={(e) => setLanguage(e.target.value)}
+                            >
+                              {LANGUAGES.map((lang) => (
+                                <MenuItem key={lang} value={lang}>
+                                  {lang}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                      </Grid>
+
+                      <Divider sx={{ my: 1 }} />
+
+                      <Box>
                         <Typography variant="caption" sx={{ fontWeight: 600, color: '#334155', mb: 0.75, display: 'block' }}>
-                          Time Taken (min)
+                          Next Revisit Date
                         </Typography>
                         <TextField
                           fullWidth
-                          type="number"
-                          value={timeTakenMin}
-                          onChange={(e) => setTimeTakenMin(Number(e.target.value))}
+                          type="date"
+                          value={nextRevisitDate}
+                          onChange={(e) => setNextRevisitDate(e.target.value)}
                           size="small"
                           slotProps={{
                             input: {
                               startAdornment: (
                                 <InputAdornment position="start">
-                                  <TimerOutlinedIcon sx={{ fontSize: 16, color: '#94A3B8' }} />
+                                  <CalendarTodayOutlinedIcon sx={{ fontSize: 16, color: '#94A3B8' }} />
                                 </InputAdornment>
                               ),
                             },
                           }}
                         />
-                      </Grid>
 
-                      <Grid size={{ xs: 6 }}>
-                        <Typography variant="caption" sx={{ fontWeight: 600, color: '#334155', mb: 0.75, display: 'block' }}>
-                          Language
-                        </Typography>
-                        <FormControl fullWidth size="small">
-                          <Select
-                            value={language}
-                            onChange={(e) => setLanguage(e.target.value)}
-                          >
-                            {LANGUAGES.map((lang) => (
-                              <MenuItem key={lang} value={lang}>
-                                {lang}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                    </Grid>
-
-                    <Divider sx={{ my: 1 }} />
-
-                    <Box>
-                      <Typography variant="caption" sx={{ fontWeight: 600, color: '#334155', mb: 0.75, display: 'block' }}>
-                        Next Revisit Date
-                      </Typography>
-                      <TextField
-                        fullWidth
-                        type="date"
-                        value={nextRevisitDate}
-                        onChange={(e) => setNextRevisitDate(e.target.value)}
-                        size="small"
-                        slotProps={{
-                          input: {
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <CalendarTodayOutlinedIcon sx={{ fontSize: 16, color: '#94A3B8' }} />
-                              </InputAdornment>
-                            ),
-                          },
-                        }}
-                      />
-
-                      {/* Quick preset chips */}
-                      <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
-                        <Chip
-                          label="Tomorrow (+1d)"
-                          size="small"
-                          onClick={() => setQuickRevisitDays(1)}
-                          sx={{ fontSize: '0.725rem', cursor: 'pointer' }}
-                        />
-                        <Chip
-                          label="In 3 days (+3d)"
-                          size="small"
-                          onClick={() => setQuickRevisitDays(3)}
-                          sx={{ fontSize: '0.725rem', cursor: 'pointer' }}
-                        />
-                        <Chip
-                          label="In 1 week (+7d)"
-                          size="small"
-                          onClick={() => setQuickRevisitDays(7)}
-                          sx={{ fontSize: '0.725rem', cursor: 'pointer' }}
-                        />
-                      </Stack>
-                    </Box>
-                  </>
+                        {/* Quick preset chips */}
+                        <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
+                          <Chip
+                            label="Tomorrow (+1d)"
+                            size="small"
+                            onClick={() => setQuickRevisitDays(1)}
+                            sx={{ fontSize: '0.725rem', cursor: 'pointer' }}
+                          />
+                          <Chip
+                            label="In 3 days (+3d)"
+                            size="small"
+                            onClick={() => setQuickRevisitDays(3)}
+                            sx={{ fontSize: '0.725rem', cursor: 'pointer' }}
+                          />
+                          <Chip
+                            label="In 1 week (+7d)"
+                            size="small"
+                            onClick={() => setQuickRevisitDays(7)}
+                            sx={{ fontSize: '0.725rem', cursor: 'pointer' }}
+                          />
+                        </Stack>
+                      </Box>
+                    </Stack>
+                  </Collapse>
                 )}
 
                 {/* Inspiration callout */}
@@ -835,7 +883,9 @@ export default function ProblemForm() {
                 >
                   <SparklesIcon sx={{ fontSize: 18, color: '#4F3FF0', mt: 0.25 }} />
                   <Typography variant="caption" sx={{ color: '#475569', lineHeight: 1.5 }}>
-                    A short, honest note now is more useful than a polished explanation later. Return to the hard ones.
+                    {!isEdit && !logFirstAttempt
+                      ? 'Problems saved to your backlog start as "Not Attempted". You can practice and record attempts anytime.'
+                      : 'A short, honest note now is more useful than a polished explanation later. Return to the hard ones.'}
                   </Typography>
                 </Box>
 
@@ -856,8 +906,10 @@ export default function ProblemForm() {
                     <CircularProgress size={24} color="inherit" />
                   ) : isEdit ? (
                     'Save Changes'
-                  ) : (
+                  ) : logFirstAttempt ? (
                     'Save Problem & Attempt'
+                  ) : (
+                    'Add to Backlog'
                   )}
                 </Button>
               </Stack>
