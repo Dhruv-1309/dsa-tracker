@@ -16,9 +16,53 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const TOKEN_KEY = 'dsa_tracker_token';
+const COOKIE_DAYS = 30;
+
+function setTokenCookie(tokenVal: string, days = COOKIE_DAYS) {
+    const maxAge = days * 24 * 60 * 60;
+    const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
+    document.cookie = `${TOKEN_KEY}=${encodeURIComponent(tokenVal)}; path=/; max-age=${maxAge}; SameSite=Lax${isSecure ? '; Secure' : ''}`;
+}
+
+function getTokenCookie(): string | null {
+    if (typeof document === 'undefined') return null;
+    const nameEQ = `${TOKEN_KEY}=`;
+    const parts = document.cookie.split(';');
+    for (let i = 0; i < parts.length; i++) {
+        const c = parts[i].trim();
+        if (c.indexOf(nameEQ) === 0) {
+            return decodeURIComponent(c.substring(nameEQ.length));
+        }
+    }
+    return null;
+}
+
+function removeTokenCookie() {
+    if (typeof document === 'undefined') return;
+    const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
+    document.cookie = `${TOKEN_KEY}=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax${isSecure ? '; Secure' : ''}`;
+}
+
+function getPersistedToken(): string | null {
+    // 1. Try reading from cookie first
+    const cookieToken = getTokenCookie();
+    if (cookieToken) return cookieToken;
+
+    // 2. Fall back to localStorage (and migrate to cookie)
+    try {
+        const localToken = localStorage.getItem(TOKEN_KEY);
+        if (localToken) {
+            setTokenCookie(localToken);
+            return localToken;
+        }
+    } catch {
+        // localStorage might be unavailable or restricted in some privacy modes
+    }
+    return null;
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [token, setTokenState] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY));
+    const [token, setTokenState] = useState<string | null>(() => getPersistedToken());
     const [user, setUser] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
 
@@ -33,16 +77,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 // Ignore network errors on logout
             });
         }
-        localStorage.removeItem(TOKEN_KEY);
+        removeTokenCookie();
+        try {
+            localStorage.removeItem(TOKEN_KEY);
+        } catch {
+            // Ignore storage errors
+        }
         setTokenState(null);
         setUser(null);
     }, [token]);
 
     const setToken = useCallback((newToken: string | null) => {
         if (newToken) {
-            localStorage.setItem(TOKEN_KEY, newToken);
+            setTokenCookie(newToken);
+            try {
+                localStorage.setItem(TOKEN_KEY, newToken);
+            } catch {
+                // Ignore storage errors
+            }
         } else {
-            localStorage.removeItem(TOKEN_KEY);
+            removeTokenCookie();
+            try {
+                localStorage.removeItem(TOKEN_KEY);
+            } catch {
+                // Ignore storage errors
+            }
         }
         setTokenState(newToken);
     }, []);
