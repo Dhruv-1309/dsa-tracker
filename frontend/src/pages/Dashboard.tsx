@@ -30,8 +30,8 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 
 const STATUS_ORDER = ['Not Attempted', 'Tried', 'Could not solve', 'Solved', 'Solved optimally'];
 const STATUS_COLORS: Record<string, string> = {
-  'Not Attempted': '#E2E4EC',
-  'Tried': '#C7CCE3',
+  'Not Attempted': '#94A3B8',
+  'Tried': '#F59E0B',
   'Could not solve': '#8B7FF5',
   'Solved': '#4F3FF0',
   'Solved optimally': '#10B981',

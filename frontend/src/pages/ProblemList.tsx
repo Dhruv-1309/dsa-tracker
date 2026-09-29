@@ -227,6 +227,22 @@ export default function ProblemList({
 
   const getStatusChip = (st: string) => {
     const isSolved = st === 'Solved' || st === 'Solved optimally';
+    const dotColor = isSolved
+      ? '#10B981'
+      : st === 'Tried'
+      ? '#F59E0B'
+      : st === 'Could not solve'
+      ? '#8B7FF5'
+      : '#94A3B8';
+
+    const textColor = isSolved
+      ? '#065F46'
+      : st === 'Tried'
+      ? '#92400E'
+      : st === 'Could not solve'
+      ? '#5B21B6'
+      : '#475569';
+
     return (
       <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}>
         <Box
@@ -234,14 +250,14 @@ export default function ProblemList({
             width: 7,
             height: 7,
             borderRadius: '50%',
-            backgroundColor: isSolved ? '#10B981' : st === 'Tried' ? '#F59E0B' : '#94A3B8',
+            backgroundColor: dotColor,
           }}
         />
         <Typography
           variant="body2"
           sx={{
-            fontWeight: isSolved ? 600 : 500,
-            color: isSolved ? '#065F46' : '#475569',
+            fontWeight: isSolved || st === 'Tried' ? 600 : 500,
+            color: textColor,
             fontSize: '0.85rem',
           }}
         >

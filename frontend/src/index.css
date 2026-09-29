@@ -15,8 +15,8 @@
   --color-danger-soft: #FDECEC;
   --color-warning: #B45309;
 
-  --color-status-1: #E2E4EC; /* Not Attempted */
-  --color-status-2: #C7CCE3; /* Tried */
+  --color-status-1: #94A3B8; /* Not Attempted */
+  --color-status-2: #F59E0B; /* Tried */
   --color-status-3: #8B7FF5; /* Logic Done */
   --color-status-4: #4F3FF0; /* Code Done */
   --color-status-5: #10B981; /* Solved */

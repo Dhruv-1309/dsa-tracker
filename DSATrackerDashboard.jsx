@@ -3,8 +3,8 @@ import { LayoutDashboard, ListTodo, RotateCcw, Settings, Clock, AlertCircle } fr
 
 const STATUS_ORDER = ['Not Attempted', 'Tried', 'Logic Done', 'Code Done', 'Solved', 'Solved Optimally'];
 const STATUS_COLORS = {
-  'Not Attempted': '#E2E4EC',
-  'Tried': '#C7CCE3',
+  'Not Attempted': '#94A3B8',
+  'Tried': '#F59E0B',
   'Logic Done': '#8B7FF5',
   'Code Done': '#4F3FF0',
   'Solved': '#10B981',
