@@ -354,24 +354,6 @@ const filterControlSx = {
             )}
           </Stack>
         </div>
-
-        {!readOnly && (
-          <Button
-            component={RouterLink}
-            to="/problems/new"
-            variant="contained"
-            startIcon={<AddIcon />}
-            sx={{
-              px: 2.5,
-              py: 1,
-              fontWeight: 600,
-              borderRadius: RADIUS.control,
-              alignSelf: { xs: 'stretch', sm: 'auto' },
-            }}
-          >
-            Add Problem
-          </Button>
-        )}
       </Box>
 
       {/* Filter Toolbar */}

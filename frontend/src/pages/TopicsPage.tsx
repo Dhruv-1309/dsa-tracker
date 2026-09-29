@@ -16,7 +16,6 @@ import {
 } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import TagIcon from '@mui/icons-material/Tag';
-import AddIcon from '@mui/icons-material/Add';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 
 export default function TopicsPage() {
@@ -64,30 +63,6 @@ export default function TopicsPage() {
             See the shape of your practice across algorithmic domains and pinpoint gaps.
           </Typography>
         </div>
-
-        <Button
-          component={RouterLink}
-          to="/problems/new"
-          variant="outlined"
-          size="small"
-          startIcon={<AddIcon />}
-          sx={{
-            borderRadius: 2,
-            fontWeight: 600,
-            py: 0.8,
-            px: 2,
-            fontSize: '0.875rem',
-            borderColor: '#E3E6EF',
-            color: '#171A2B',
-            '&:hover': {
-              borderColor: '#4F3FF0',
-              backgroundColor: '#F8FAFC',
-              color: '#4F3FF0',
-            },
-          }}
-        >
-          Log Problem
-        </Button>
       </Box>
 
       {isLoading ? (

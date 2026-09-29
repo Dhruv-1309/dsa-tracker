@@ -153,6 +153,24 @@ export default function Navbar() {
             </Button>
 
             <IconButton
+              component={RouterLink}
+              to="/problems/new"
+              aria-label="Log problem"
+              sx={{
+                display: { xs: 'inline-flex', sm: 'none' },
+                backgroundColor: '#4F3FF0',
+                color: '#FFFFFF',
+                borderRadius: 2,
+                p: 0.8,
+                '&:hover': {
+                  backgroundColor: '#4335D6',
+                },
+              }}
+            >
+              <AddIcon sx={{ fontSize: 20 }} />
+            </IconButton>
+
+            <IconButton
               onClick={handleMenuOpen}
               aria-label="account menu"
               sx={{
