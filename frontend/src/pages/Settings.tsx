@@ -21,10 +21,12 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '../context/AuthContext';
+import { useApiClient } from '../api/useApiClient';
 import { API_BASE_URL } from '../api/config';
 
 export default function Settings() {
   const { user, token, setUser, logout } = useAuth();
+  const fetchApi = useApiClient();
   const navigate = useNavigate();
 
   // Profile / Username state
@@ -76,14 +78,24 @@ export default function Settings() {
 
     setProfileLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/users/me/profile`, {
+      let res = await fetchApi('/v1/users/me/profile', {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({ displayName: trimmed }),
       });
+
+      if (!res.ok && res.status === 404) {
+        res = await fetchApi('/users/me/profile', {
+          method: 'PATCH',
+          body: JSON.stringify({ displayName: trimmed }),
+        });
+      }
+
+      if (!res.ok && res.status === 404) {
+        res = await fetchApi('/v1/users/me', {
+          method: 'PATCH',
+          body: JSON.stringify({ displayName: trimmed }),
+        });
+      }
 
       if (res.ok) {
         const updated = await res.json();
@@ -91,7 +103,11 @@ export default function Settings() {
         setProfileSuccess('Profile username updated successfully! Friends will see this name.');
       } else {
         const err = await res.json().catch(() => null);
-        setProfileError(err?.message || err?.error || 'Failed to update username.');
+        if (res.status === 404) {
+          setProfileError('The backend service is currently deploying updates. Please wait 1-2 minutes and try again.');
+        } else {
+          setProfileError(err?.message || err?.error || 'Failed to update username.');
+        }
       }
     } catch {
       setProfileError('Network error. Unable to reach server.');

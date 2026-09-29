@@ -145,4 +145,28 @@ class UserControllerTest {
 
         verify(userService, never()).changePassword(any(), any());
     }
+
+    @Test
+    @DisplayName("PATCH /api/v1/users/me/profile updates display name and returns 200")
+    void updateProfile_success() throws Exception {
+        when(userService.updateProfile(eq(testUserId), any())).thenReturn(
+                com.example.demo.dto.UserProfileResponse.builder()
+                        .id(testUserId)
+                        .displayName("NewName")
+                        .email("test@example.com")
+                        .build()
+        );
+
+        mockMvcWithAuth.perform(patch("/api/v1/users/me/profile")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"displayName\":\"NewName\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.displayName").value("NewName"));
+
+        mockMvcWithAuth.perform(patch("/api/users/me/profile")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"displayName\":\"NewName\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.displayName").value("NewName"));
+    }
 }
