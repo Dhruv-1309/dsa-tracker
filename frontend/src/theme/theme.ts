@@ -114,9 +114,10 @@ export const theme = createTheme({
           },
         },
         contained: {
-          background: 'linear-gradient(135deg, #4F3FF0 0%, #6355F5 100%)',
+          backgroundColor: '#4F3FF0',
+          color: '#FFFFFF',
           '&:hover': {
-            background: 'linear-gradient(135deg, #3A2EB8 0%, #4F3FF0 100%)',
+            backgroundColor: '#3A2EB8',
           },
         },
         outlined: {

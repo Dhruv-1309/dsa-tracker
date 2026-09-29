@@ -394,6 +394,16 @@ export default function Friends() {
                   fontWeight: 600,
                   borderRadius: 2,
                   whiteSpace: 'nowrap',
+                  backgroundColor: '#4F3FF0',
+                  color: '#FFFFFF !important',
+                  '&.Mui-disabled': {
+                    backgroundColor: '#4F3FF0',
+                    color: 'rgba(255, 255, 255, 0.85) !important',
+                    opacity: 0.7,
+                  },
+                  '&:hover': {
+                    backgroundColor: '#4335D6',
+                  },
                 }}
               >
                 {sendRequestMutation.isPending ? <CircularProgress size={20} color="inherit" /> : 'Send Request'}
