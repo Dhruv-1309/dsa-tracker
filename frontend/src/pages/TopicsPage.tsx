@@ -68,11 +68,25 @@ export default function TopicsPage() {
         <Button
           component={RouterLink}
           to="/problems/new"
-          variant="contained"
+          variant="outlined"
+          size="small"
           startIcon={<AddIcon />}
-          sx={{ borderRadius: 2.5, fontWeight: 600 }}
+          sx={{
+            borderRadius: 2,
+            fontWeight: 600,
+            py: 0.8,
+            px: 2,
+            fontSize: '0.875rem',
+            borderColor: '#E3E6EF',
+            color: '#171A2B',
+            '&:hover': {
+              borderColor: '#4F3FF0',
+              backgroundColor: '#F8FAFC',
+              color: '#4F3FF0',
+            },
+          }}
         >
-          Add Problem
+          Log Problem
         </Button>
       </Box>
 
@@ -99,7 +113,7 @@ export default function TopicsPage() {
             backgroundColor: '#FAFBFC',
           }}
         >
-          <Typography variant="h6" sx={{ fontFamily: '"Space Grotesk", sans-serif', fontWeight: 600, mb: 1 }}>
+          <Typography variant="h6" component="h2" sx={{ fontFamily: '"Space Grotesk", sans-serif', fontWeight: 600, mb: 1 }}>
             No topics tracked yet
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 440, mx: 'auto', mb: 3 }}>
@@ -154,6 +168,7 @@ export default function TopicsPage() {
                       </Box>
                       <Typography
                         variant="h6"
+                        component="h2"
                         sx={{
                           fontFamily: '"Space Grotesk", sans-serif',
                           fontWeight: 700,
@@ -179,7 +194,7 @@ export default function TopicsPage() {
                       sx={{
                         height: 7,
                         borderRadius: 3.5,
-                        backgroundColor: '#F1F5F9',
+                        backgroundColor: '#E2E8F0',
                         mb: 1.5,
                         '& .MuiLinearProgress-bar': {
                           backgroundColor: pct === 100 ? '#0E9F6E' : pct > 50 ? '#4F3FF0' : '#8B7FF5',
@@ -190,9 +205,6 @@ export default function TopicsPage() {
 
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
-                        {pct === 100 && (
-                          <CheckCircleOutlinedIcon sx={{ color: '#0E9F6E', fontSize: 15 }} />
-                        )}
                         <Typography
                           variant="caption"
                           sx={{
@@ -203,6 +215,9 @@ export default function TopicsPage() {
                         >
                           {pct}% clear
                         </Typography>
+                        {pct === 100 && (
+                          <CheckCircleOutlinedIcon aria-hidden="true" sx={{ color: '#0E9F6E', fontSize: 15 }} />
+                        )}
                       </Stack>
 
                       <Typography
