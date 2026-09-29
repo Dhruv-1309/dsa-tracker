@@ -10,3 +10,7 @@ export interface ChangePasswordRequest {
   currentPassword: string;
   newPassword: string;
 }
+
+export interface UpdateProfileRequest {
+  displayName: string;
+}

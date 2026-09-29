@@ -171,7 +171,7 @@ export default function FriendSummaryView() {
                 Viewing {summary.displayName}'s log
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {summary.email}
+                Connected Friend
               </Typography>
             </div>
           </Stack>

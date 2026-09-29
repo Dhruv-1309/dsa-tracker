@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.ChangePasswordRequest;
+import com.example.demo.dto.UpdateProfileRequest;
 import com.example.demo.dto.UserProfileResponse;
 import com.example.demo.security.CustomUserDetails;
 import com.example.demo.service.UserService;
@@ -53,6 +54,18 @@ public class UserController {
         }
         UUID userId = UUID.fromString(userDetails.getId());
         return ResponseEntity.ok(userService.getProfile(userId));
+    }
+
+    @PatchMapping({"/me/profile", "/me"})
+    public ResponseEntity<UserProfileResponse> updateProfile(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody UpdateProfileRequest request
+    ) {
+        if (userDetails == null) {
+            throw new ResponseStatusException(org.springframework.http.HttpStatus.UNAUTHORIZED, "Unauthenticated");
+        }
+        UUID userId = UUID.fromString(userDetails.getId());
+        return ResponseEntity.ok(userService.updateProfile(userId, request));
     }
 
     @PatchMapping("/me/password")

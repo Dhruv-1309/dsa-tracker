@@ -476,7 +476,6 @@ export default function Friends() {
               <TableHead>
                 <TableRow>
                   <TableCell>Requester</TableCell>
-                  <TableCell>Email</TableCell>
                   <TableCell>Requested On</TableCell>
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
@@ -486,9 +485,6 @@ export default function Friends() {
                   <TableRow key={req.id} hover>
                     <TableCell sx={{ fontWeight: 600, color: '#171A2B' }}>
                       {req.requesterName}
-                    </TableCell>
-                    <TableCell sx={{ color: '#64748B', fontSize: '0.85rem' }}>
-                      {req.requesterEmail}
                     </TableCell>
                     <TableCell sx={{ color: '#64748B', fontSize: '0.85rem' }}>
                       {new Date(req.createdAt).toLocaleDateString(undefined, {
@@ -583,7 +579,6 @@ export default function Friends() {
               <TableHead>
                 <TableRow>
                   <TableCell>Name</TableCell>
-                  <TableCell>Email</TableCell>
                   <TableCell>Connected Since</TableCell>
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
@@ -593,9 +588,6 @@ export default function Friends() {
                   <TableRow key={friend.id} hover>
                     <TableCell sx={{ fontWeight: 600, color: '#171A2B' }}>
                       {friend.displayName}
-                    </TableCell>
-                    <TableCell sx={{ color: '#64748B', fontSize: '0.85rem' }}>
-                      {friend.email}
                     </TableCell>
                     <TableCell sx={{ color: '#64748B', fontSize: '0.85rem' }}>
                       {new Date(friend.respondedAt).toLocaleDateString(undefined, {

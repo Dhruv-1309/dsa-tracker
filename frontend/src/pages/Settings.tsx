@@ -18,13 +18,27 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL } from '../api/config';
 
 export default function Settings() {
-  const { user, token, logout } = useAuth();
+  const { user, token, setUser, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Profile / Username state
+  const [displayName, setDisplayName] = useState(user?.displayName || '');
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileSuccess, setProfileSuccess] = useState('');
+  const [profileError, setProfileError] = useState('');
+
+  // Keep displayName in sync when user data loads
+  React.useEffect(() => {
+    if (user?.displayName && !displayName) {
+      setDisplayName(user.displayName);
+    }
+  }, [user?.displayName]);
 
   // Password state
   const [currentPassword, setCurrentPassword] = useState('');
@@ -44,6 +58,47 @@ export default function Settings() {
   const isMatchValid = newPassword === confirmPassword && confirmPassword.length > 0;
   const isFormFilled = currentPassword.trim().length > 0 && newPassword.length > 0 && confirmPassword.length > 0;
   const isPasswordFormValid = isFormFilled && isLengthValid && isMatchValid;
+
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileError('');
+    setProfileSuccess('');
+
+    const trimmed = displayName.trim();
+    if (!trimmed) {
+      setProfileError('Username cannot be blank.');
+      return;
+    }
+    if (trimmed.length < 2 || trimmed.length > 50) {
+      setProfileError('Username must be between 2 and 50 characters.');
+      return;
+    }
+
+    setProfileLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/users/me/profile`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ displayName: trimmed }),
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        setUser(updated);
+        setProfileSuccess('Profile username updated successfully! Friends will see this name.');
+      } else {
+        const err = await res.json().catch(() => null);
+        setProfileError(err?.message || err?.error || 'Failed to update username.');
+      }
+    } catch {
+      setProfileError('Network error. Unable to reach server.');
+    } finally {
+      setProfileLoading(false);
+    }
+  };
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,6 +201,85 @@ export default function Settings() {
             </Typography>
           </Box>
 
+          {/* Profile / Username Section */}
+          <Box component="form" onSubmit={handleProfileSubmit} noValidate sx={{ mb: 4 }}>
+            <Typography
+              variant="subtitle1"
+              sx={{
+                fontFamily: '"Space Grotesk", sans-serif',
+                fontWeight: 700,
+                color: '#171A2B',
+                mb: 0.5,
+              }}
+            >
+              Profile Username
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#64748B', mb: 2.5 }}>
+              Choose a public name that your friends will see on friend requests and problem logs. Your email is kept strictly private.
+            </Typography>
+
+            {profileSuccess && (
+              <Alert severity="success" sx={{ mb: 2.5, borderRadius: 2 }}>
+                {profileSuccess}
+              </Alert>
+            )}
+
+            {profileError && (
+              <Alert severity="error" sx={{ mb: 2.5, borderRadius: 2 }}>
+                {profileError}
+              </Alert>
+            )}
+
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: { sm: 'center' } }}>
+              <TextField
+                fullWidth
+                size="small"
+                id="display-name"
+                name="displayName"
+                placeholder="e.g. Alex Coder"
+                value={displayName}
+                onChange={(e) => {
+                  setDisplayName(e.target.value);
+                  if (profileError) setProfileError('');
+                }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <AccountCircleOutlinedIcon sx={{ color: '#94A3B8', fontSize: 20 }} />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+                sx={{
+                  maxWidth: { sm: 360 },
+                  '& input': {
+                    fontWeight: 600,
+                  },
+                }}
+              />
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={profileLoading || !displayName.trim() || displayName.trim() === (user?.displayName || '')}
+                sx={{
+                  px: 3,
+                  py: 1,
+                  fontWeight: 600,
+                  borderRadius: 2,
+                  whiteSpace: 'nowrap',
+                  alignSelf: { xs: 'stretch', sm: 'center' },
+                  backgroundColor: '#4F3FF0',
+                  color: '#FFFFFF !important',
+                }}
+              >
+                {profileLoading ? <CircularProgress size={20} color="inherit" /> : 'Save Username'}
+              </Button>
+            </Stack>
+          </Box>
+
+          <Divider sx={{ my: 4 }} />
+
           {/* Read-Only Email Field */}
           <Box sx={{ mb: 4 }}>
             <Typography
@@ -184,6 +318,9 @@ export default function Settings() {
                 {user?.email || 'Loading account email...'}
               </Typography>
             </Box>
+            <Typography variant="caption" sx={{ color: '#94A3B8', display: 'block', mt: 1 }}>
+              Your email is private and is never shown to other users or friends.
+            </Typography>
           </Box>
 
           <Divider sx={{ my: 4 }} />

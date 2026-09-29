@@ -137,7 +137,9 @@ public class FriendService {
             User requester = conn.getRequestedBy();
             String name = (requester.getDisplayName() != null && !requester.getDisplayName().isBlank())
                     ? requester.getDisplayName()
-                    : requester.getEmail();
+                    : (requester.getEmail() != null && requester.getEmail().contains("@")
+                        ? requester.getEmail().substring(0, requester.getEmail().indexOf('@'))
+                        : "Coder");
 
             return IncomingFriendRequestResponse.builder()
                     .id(conn.getId())
@@ -204,7 +206,9 @@ public class FriendService {
             User friend = conn.getUserA().getId().equals(callerId) ? conn.getUserB() : conn.getUserA();
             String name = (friend.getDisplayName() != null && !friend.getDisplayName().isBlank())
                     ? friend.getDisplayName()
-                    : friend.getEmail();
+                    : (friend.getEmail() != null && friend.getEmail().contains("@")
+                        ? friend.getEmail().substring(0, friend.getEmail().indexOf('@'))
+                        : "Coder");
 
             return FriendResponse.builder()
                     .id(conn.getId())
@@ -272,7 +276,9 @@ public class FriendService {
 
         String displayName = (friend.getDisplayName() != null && !friend.getDisplayName().isBlank())
                 ? friend.getDisplayName()
-                : friend.getEmail();
+                : (friend.getEmail() != null && friend.getEmail().contains("@")
+                    ? friend.getEmail().substring(0, friend.getEmail().indexOf('@'))
+                    : "Coder");
 
         return FriendSummaryResponse.builder()
                 .friendUserId(friendUserId)

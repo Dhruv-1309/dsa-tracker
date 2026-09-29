@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.ChangePasswordRequest;
+import com.example.demo.dto.UpdateProfileRequest;
 import com.example.demo.dto.UserProfileResponse;
 import com.example.demo.model.Problem;
 import com.example.demo.model.User;
@@ -36,6 +37,23 @@ public class UserService {
                 .displayName(user.getDisplayName())
                 .timezone(user.getTimezone())
                 .createdAt(user.getCreatedAt())
+                .build();
+    }
+
+    @Transactional
+    public UserProfileResponse updateProfile(UUID userId, UpdateProfileRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        user.setDisplayName(request.getDisplayName().trim());
+        User saved = userRepository.save(user);
+
+        return UserProfileResponse.builder()
+                .id(saved.getId())
+                .email(saved.getEmail())
+                .displayName(saved.getDisplayName())
+                .timezone(saved.getTimezone())
+                .createdAt(saved.getCreatedAt())
                 .build();
     }
 
