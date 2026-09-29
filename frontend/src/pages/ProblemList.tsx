@@ -41,7 +41,19 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import ClearIcon from '@mui/icons-material/Clear';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 
-export default function ProblemList() {
+export interface ProblemListProps {
+  initialProblems?: Problem[];
+  readOnly?: boolean;
+  headerTitle?: string;
+  headerSubtitle?: string;
+}
+
+export default function ProblemList({
+  initialProblems,
+  readOnly = false,
+  headerTitle,
+  headerSubtitle,
+}: ProblemListProps = {}) {
   const fetchApi = useApiClient();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -84,7 +96,7 @@ export default function ProblemList() {
   if (status) queryParams.append('status', status);
   queryParams.append('sort', 'createdAt,desc');
 
-  const { data: problems = [], isLoading, isFetching, error } = useQuery<Problem[]>({
+  const { data: fetchedProblems = [], isLoading: isQueryLoading, isFetching: isQueryFetching, error } = useQuery<Problem[]>({
     queryKey: ['problems', deferredSearch, deferredTopic, status],
     queryFn: async () => {
       const res = await fetchApi(`/problems?${queryParams.toString()}`);
@@ -92,7 +104,12 @@ export default function ProblemList() {
       return res.json();
     },
     placeholderData: (previousData) => previousData,
+    enabled: !initialProblems,
   });
+
+  const problems = initialProblems ?? fetchedProblems;
+  const isLoading = !initialProblems && isQueryLoading;
+  const isFetching = !initialProblems && isQueryFetching;
 
   const filteredProblems = useMemo(() => {
     let list = [...problems];
@@ -274,11 +291,11 @@ export default function ProblemList() {
               mb: 0.5,
             }}
           >
-            Problems Directory
+            {headerTitle || 'Problems Directory'}
           </Typography>
           <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
             <Typography variant="body2" color="text.secondary">
-              Manage your logged algorithmic challenges and review intervals.
+              {headerSubtitle || 'Manage your logged algorithmic challenges and review intervals.'}
             </Typography>
             <Chip
               label={`${sortedProblems.length} total`}
@@ -296,21 +313,23 @@ export default function ProblemList() {
           </Stack>
         </div>
 
-        <Button
-          component={RouterLink}
-          to="/problems/new"
-          variant="contained"
-          startIcon={<AddIcon />}
-          sx={{
-            px: 2.5,
-            py: 1,
-            fontWeight: 600,
-            borderRadius: 2.5,
-            alignSelf: { xs: 'stretch', sm: 'auto' },
-          }}
-        >
-          Add Problem
-        </Button>
+        {!readOnly && (
+          <Button
+            component={RouterLink}
+            to="/problems/new"
+            variant="contained"
+            startIcon={<AddIcon />}
+            sx={{
+              px: 2.5,
+              py: 1,
+              fontWeight: 600,
+              borderRadius: 2.5,
+              alignSelf: { xs: 'stretch', sm: 'auto' },
+            }}
+          >
+            Add Problem
+          </Button>
+        )}
       </Box>
 
       {/* Filter Toolbar */}
@@ -545,18 +564,24 @@ export default function ProblemList() {
             variant="h6"
             sx={{ fontFamily: '"Space Grotesk", sans-serif', fontWeight: 600, mb: 1, color: '#171A2B' }}
           >
-            {hasActiveFilters ? 'No matching problems found' : 'No problems logged yet'}
+            {hasActiveFilters
+              ? 'No matching problems found'
+              : readOnly
+              ? 'No solved problems logged yet'
+              : 'No problems logged yet'}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 440, mx: 'auto', mb: 3 }}>
             {hasActiveFilters
               ? 'Try modifying or clearing your search filters to view your problem collection.'
+              : readOnly
+              ? 'Your friend has not logged any solved problems yet.'
               : 'Add your first algorithm problem to schedule automated spaced-repetition revisits.'}
           </Typography>
           {hasActiveFilters ? (
             <Button variant="outlined" onClick={resetFilters}>
               Clear All Filters
             </Button>
-          ) : (
+          ) : !readOnly ? (
             <Button
               component={RouterLink}
               to="/problems/new"
@@ -566,7 +591,7 @@ export default function ProblemList() {
             >
               Log First Problem
             </Button>
-          )}
+          ) : null}
         </Paper>
       ) : (
         <TableContainer
@@ -601,8 +626,8 @@ export default function ProblemList() {
                 <TableCell>Difficulty</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell>Date</TableCell>
-                <TableCell>Next Revisit</TableCell>
-                <TableCell align="right">Actions</TableCell>
+                {!readOnly && <TableCell>Next Revisit</TableCell>}
+                {!readOnly && <TableCell align="right">Actions</TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -620,22 +645,34 @@ export default function ProblemList() {
                   {/* Title & Platform */}
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Link
-                        component={RouterLink}
-                        to={`/problems/${p.id}/attempts`}
-                        sx={{
-                          fontWeight: 600,
-                          color: '#171A2B',
-                          textDecoration: 'none',
-                          fontSize: '0.925rem',
-                          '&:hover': {
-                            color: '#4F3FF0',
-                            textDecoration: 'underline',
-                          },
-                        }}
-                      >
-                        {p.title}
-                      </Link>
+                      {readOnly ? (
+                        <Typography
+                          sx={{
+                            fontWeight: 600,
+                            color: '#171A2B',
+                            fontSize: '0.925rem',
+                          }}
+                        >
+                          {p.title}
+                        </Typography>
+                      ) : (
+                        <Link
+                          component={RouterLink}
+                          to={`/problems/${p.id}/attempts`}
+                          sx={{
+                            fontWeight: 600,
+                            color: '#171A2B',
+                            textDecoration: 'none',
+                            fontSize: '0.925rem',
+                            '&:hover': {
+                              color: '#4F3FF0',
+                              textDecoration: 'underline',
+                            },
+                          }}
+                        >
+                          {p.title}
+                        </Link>
+                      )}
                       {sanitizeUrl(p.url) && (
                         <Tooltip title="Open problem on platform" arrow>
                           <IconButton
@@ -707,63 +744,67 @@ export default function ProblemList() {
                   </TableCell>
 
                   {/* Next Revisit */}
-                  <TableCell>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontFamily: '"IBM Plex Mono", monospace',
-                        fontSize: '0.8rem',
-                        color: p.nextRevisitDate ? '#171A2B' : '#94A3B8',
-                      }}
-                    >
-                      {p.nextRevisitDate || 'Unscheduled'}
-                    </Typography>
-                  </TableCell>
+                  {!readOnly && (
+                    <TableCell>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: '"IBM Plex Mono", monospace',
+                          fontSize: '0.8rem',
+                          color: p.nextRevisitDate ? '#171A2B' : '#94A3B8',
+                        }}
+                      >
+                        {p.nextRevisitDate || 'Unscheduled'}
+                      </Typography>
+                    </TableCell>
+                  )}
 
                   {/* Actions */}
-                  <TableCell align="right">
-                    <Stack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
-                      <Tooltip title="Attempt Problem (Blind Mode)" arrow>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          color="primary"
-                          startIcon={<PlayArrowOutlinedIcon sx={{ fontSize: 16 }} />}
-                          onClick={() => navigate(`/problems/${p.id}/attempts`)}
-                          sx={{
-                            px: 1.5,
-                            py: 0.4,
-                            fontSize: '0.775rem',
-                            fontWeight: 600,
-                            borderRadius: 2,
-                          }}
-                        >
-                          Attempt
-                        </Button>
-                      </Tooltip>
+                  {!readOnly && (
+                    <TableCell align="right">
+                      <Stack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
+                        <Tooltip title="Attempt Problem (Blind Mode)" arrow>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="primary"
+                            startIcon={<PlayArrowOutlinedIcon sx={{ fontSize: 16 }} />}
+                            onClick={() => navigate(`/problems/${p.id}/attempts`)}
+                            sx={{
+                              px: 1.5,
+                              py: 0.4,
+                              fontSize: '0.775rem',
+                              fontWeight: 600,
+                              borderRadius: 2,
+                            }}
+                          >
+                            Attempt
+                          </Button>
+                        </Tooltip>
 
-                      <Tooltip title="Edit Problem Details" arrow>
-                        <IconButton
-                          size="small"
-                          onClick={() => navigate(`/problems/${p.id}/edit`)}
-                          sx={{ color: '#64748B', '&:hover': { color: '#4F3FF0' } }}
-                        >
-                          <EditOutlinedIcon sx={{ fontSize: 18 }} />
-                        </IconButton>
-                      </Tooltip>
+                        <Tooltip title="Edit Problem Details" arrow>
+                          <IconButton
+                            size="small"
+                            onClick={() => navigate(`/problems/${p.id}/edit`)}
+                            sx={{ color: '#64748B', '&:hover': { color: '#4F3FF0' } }}
+                          >
+                            <EditOutlinedIcon sx={{ fontSize: 18 }} />
+                          </IconButton>
+                        </Tooltip>
 
-                      <Tooltip title="Delete Problem" arrow>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleDelete(p.id, p.title)}
-                          disabled={deleteMutation.isPending}
-                          sx={{ color: '#64748B', '&:hover': { color: '#DC2626' } }}
-                        >
-                          <DeleteOutlinedIcon sx={{ fontSize: 18 }} />
-                        </IconButton>
-                      </Tooltip>
-                    </Stack>
-                  </TableCell>
+                        <Tooltip title="Delete Problem" arrow>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleDelete(p.id, p.title)}
+                            disabled={deleteMutation.isPending}
+                            sx={{ color: '#64748B', '&:hover': { color: '#DC2626' } }}
+                          >
+                            <DeleteOutlinedIcon sx={{ fontSize: 18 }} />
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>

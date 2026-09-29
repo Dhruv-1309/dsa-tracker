@@ -57,19 +57,28 @@ const LEGEND_ITEMS = [
   { level: 6, label: '6+ attempts (optimal/peak)', color: '#10B981' },
 ];
 
-export default function Heatmap() {
+interface HeatmapProps {
+  data?: HeatmapEntry[];
+  readOnly?: boolean;
+}
+
+export default function Heatmap({ data, readOnly }: HeatmapProps = {}) {
   const fetchApi = useApiClient();
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(currentYear);
 
-  const { data: entries = [], isLoading } = useQuery<HeatmapEntry[]>({
+  const { data: fetchedEntries = [], isLoading: isQueryLoading } = useQuery<HeatmapEntry[]>({
     queryKey: ['heatmap', year],
     queryFn: async () => {
       const res = await fetchApi(`/stats/heatmap?year=${year}`);
       if (!res.ok) throw new Error('Failed to fetch heatmap');
       return res.json();
     },
+    enabled: !data,
   });
+
+  const entries = data ?? fetchedEntries;
+  const isLoading = !data && isQueryLoading;
 
   const entryMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -112,34 +121,36 @@ export default function Heatmap() {
           </Typography>
         </div>
 
-        <FormControl size="small" sx={{ minWidth: 110 }}>
-          <Select
-            value={year}
-            onChange={(e) => setYear(Number(e.target.value))}
-            IconComponent={KeyboardArrowDownIcon}
-            inputProps={{ 'aria-label': 'Select activity year' }}
-            sx={{
-              borderRadius: 1.5,
-              fontFamily: '"IBM Plex Mono", monospace',
-              fontWeight: 600,
-              fontSize: '0.85rem',
-              backgroundColor: '#FFFFFF',
-              '& .MuiSelect-select': {
-                py: 0.8,
-                pr: 4,
-              },
-              '& .MuiSelect-icon': {
-                color: '#4F3FF0',
-              },
-            }}
-          >
-            {[currentYear - 2, currentYear - 1, currentYear].map((y) => (
-              <MenuItem key={y} value={y}>
-                {y}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        {!readOnly && (
+          <FormControl size="small" sx={{ minWidth: 110 }}>
+            <Select
+              value={year}
+              onChange={(e) => setYear(Number(e.target.value))}
+              IconComponent={KeyboardArrowDownIcon}
+              inputProps={{ 'aria-label': 'Select activity year' }}
+              sx={{
+                borderRadius: 1.5,
+                fontFamily: '"IBM Plex Mono", monospace',
+                fontWeight: 600,
+                fontSize: '0.85rem',
+                backgroundColor: '#FFFFFF',
+                '& .MuiSelect-select': {
+                  py: 0.8,
+                  pr: 4,
+                },
+                '& .MuiSelect-icon': {
+                  color: '#4F3FF0',
+                },
+              }}
+            >
+              {[currentYear - 2, currentYear - 1, currentYear].map((y) => (
+                <MenuItem key={y} value={y}>
+                  {y}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
       </Box>
 
       {isLoading ? (

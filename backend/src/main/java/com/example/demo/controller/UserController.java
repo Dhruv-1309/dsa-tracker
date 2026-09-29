@@ -20,6 +20,29 @@ import java.util.UUID;
 public class UserController {
 
     private final UserService userService;
+    private final com.example.demo.service.FriendService friendService;
+
+    @GetMapping("/me/friend-code")
+    public ResponseEntity<com.example.demo.dto.FriendCodeResponse> getFriendCode(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        if (userDetails == null) {
+            throw new ResponseStatusException(org.springframework.http.HttpStatus.UNAUTHORIZED, "Unauthenticated");
+        }
+        UUID userId = UUID.fromString(userDetails.getId());
+        return ResponseEntity.ok(friendService.getOrCreateFriendCode(userId));
+    }
+
+    @PostMapping("/me/friend-code/regenerate")
+    public ResponseEntity<com.example.demo.dto.FriendCodeResponse> regenerateFriendCode(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        if (userDetails == null) {
+            throw new ResponseStatusException(org.springframework.http.HttpStatus.UNAUTHORIZED, "Unauthenticated");
+        }
+        UUID userId = UUID.fromString(userDetails.getId());
+        return ResponseEntity.ok(friendService.regenerateFriendCode(userId));
+    }
 
     @GetMapping("/me")
     public ResponseEntity<UserProfileResponse> getCurrentUser(

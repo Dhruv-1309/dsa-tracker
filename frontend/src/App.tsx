@@ -19,6 +19,8 @@ const RevisitQueue = lazy(() => import('./pages/RevisitQueue'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const TopicsPage = lazy(() => import('./pages/TopicsPage'));
 const Settings = lazy(() => import('./pages/Settings'));
+const Friends = lazy(() => import('./pages/Friends'));
+const FriendSummaryView = lazy(() => import('./pages/FriendSummaryView'));
 
 // Aggressive caching to eliminate repeated network calls
 const queryClient = new QueryClient({
@@ -55,6 +57,8 @@ function App() {
                   <Route path="/problems" element={<ProblemList />} />
                   <Route path="/queue" element={<RevisitQueue />} />
                   <Route path="/topics" element={<TopicsPage />} />
+                  <Route path="/friends" element={<Friends />} />
+                  <Route path="/friends/:friendUserId" element={<FriendSummaryView />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/problems/new" element={<ProblemForm />} />
                   <Route path="/problems/:id/edit" element={<ProblemForm />} />

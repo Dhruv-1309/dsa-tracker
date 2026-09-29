@@ -30,6 +30,7 @@ import AddIcon from '@mui/icons-material/Add';
 import LogoutIcon from '@mui/icons-material/Logout';
 import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import TagIcon from '@mui/icons-material/Tag';
+import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
@@ -75,6 +76,7 @@ export default function Navbar() {
     { label: 'Problems', path: '/problems', icon: <FormatListBulletedIcon sx={{ fontSize: 19 }} /> },
     { label: 'Revisit Queue', path: '/queue', icon: <ReplayIcon sx={{ fontSize: 19 }} /> },
     { label: 'Topics', path: '/topics', icon: <TagIcon sx={{ fontSize: 19 }} /> },
+    { label: 'Friends', path: '/friends', icon: <PeopleAltOutlinedIcon sx={{ fontSize: 19 }} /> },
   ];
 
   return (

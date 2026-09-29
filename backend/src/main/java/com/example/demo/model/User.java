@@ -33,6 +33,9 @@ public class User {
     @Column
     private String timezone;
 
+    @Column(name = "friend_code", unique = true, length = 12)
+    private String friendCode;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

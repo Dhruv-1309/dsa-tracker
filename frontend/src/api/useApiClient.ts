@@ -28,9 +28,9 @@ export function useApiClient() {
                 signal: controller.signal,
             });
 
-            // Only force-logout if we actually sent a token and the server says it's invalid.
-            // Do NOT logout on network errors or timeouts.
-            if ((response.status === 401 || response.status === 403) && token) {
+            // Only force-logout if we actually sent a token and the server says it's invalid (401).
+            // Do NOT logout on 403 (e.g. friend authorization checks) or network errors.
+            if (response.status === 401 && token) {
                 logout();
             }
 
