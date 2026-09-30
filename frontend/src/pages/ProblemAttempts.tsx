@@ -438,21 +438,59 @@ export default function ProblemAttempts() {
             <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>
               Target Complexity
             </Typography>
-            <Typography
-              variant="h5"
-              sx={{
-                fontFamily: '"IBM Plex Mono", monospace',
-                fontWeight: 700,
-                color: (!isFriendView && blindMode) ? '#94A3B8' : '#171A2B',
-                fontStyle: (!isFriendView && blindMode) ? 'italic' : 'normal',
-                mt: 0.5,
-              }}
-            >
-              {(!isFriendView && blindMode) ? 'Hidden in Blind Mode' : `${problem.optimalTime || 'O(n)'} time`}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {(!isFriendView && blindMode) ? 'Toggle blind mode to view' : `Space: ${problem.optimalSpace || 'O(1)'}`}
-            </Typography>
+            {(!isFriendView && blindMode) ? (
+              <>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontFamily: '"IBM Plex Mono", monospace',
+                    fontWeight: 700,
+                    color: '#94A3B8',
+                    fontStyle: 'italic',
+                    mt: 0.5,
+                  }}
+                >
+                  Hidden in Blind Mode
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Toggle blind mode to view
+                </Typography>
+              </>
+            ) : (
+              <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2.5, mt: 0.5 }}>
+                <Box>
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontFamily: '"IBM Plex Mono", monospace',
+                      fontWeight: 700,
+                      color: '#171A2B',
+                    }}
+                  >
+                    {problem.optimalTime || 'O(n)'}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Time
+                  </Typography>
+                </Box>
+                <Box sx={{ width: '1px', height: 28, backgroundColor: '#E2E8F0', alignSelf: 'center' }} />
+                <Box>
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontFamily: '"IBM Plex Mono", monospace',
+                      fontWeight: 700,
+                      color: '#171A2B',
+                    }}
+                  >
+                    {problem.optimalSpace || 'O(1)'}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Space
+                  </Typography>
+                </Box>
+              </Box>
+            )}
           </Paper>
         </Grid>
 
