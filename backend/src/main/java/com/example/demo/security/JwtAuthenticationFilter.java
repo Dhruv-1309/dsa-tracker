@@ -48,6 +48,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         try {
+            String userId = jwtService.extractUserId(jwt);
+            java.util.Date issuedAt = jwtService.extractIssuedAt(jwt);
+            if (tokenBlacklistService.isUserTokenRevoked(userId, issuedAt)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
             userEmail = jwtService.extractUsername(jwt);
             
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {

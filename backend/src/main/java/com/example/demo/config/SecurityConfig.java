@@ -41,6 +41,7 @@ public class SecurityConfig {
             .headers(headers -> headers
                 .contentTypeOptions(Customizer.withDefaults())
                 .frameOptions(frame -> frame.deny())
+                .referrerPolicy(referrer -> referrer.policy(org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
                 .httpStrictTransportSecurity(hsts -> hsts
                     .includeSubDomains(true)
                     .maxAgeInSeconds(31536000)

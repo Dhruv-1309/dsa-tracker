@@ -1,6 +1,11 @@
 server:
   port: ${PORT:8080}
   forward-headers-strategy: framework
+  error:
+    include-stacktrace: never
+    include-message: never
+    include-binding-errors: never
+    include-exception: false
   compression:
     enabled: true
     mime-types: application/json,text/html,text/xml,text/plain,text/css,application/javascript

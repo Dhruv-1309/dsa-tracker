@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useApiClient } from '../api/useApiClient';
+import { useAuth } from '../context/AuthContext';
 import Heatmap from '../components/Heatmap';
 import type { Problem } from '../types/problem';
 import type { StatsSummary } from '../types/stats';
@@ -36,6 +37,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const fetchApi = useApiClient();
   const navigate = useNavigate();
 
@@ -66,7 +68,9 @@ export default function Dashboard() {
   });
 
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const timeGreeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const name = user?.displayName?.trim();
+  const greeting = name ? `${timeGreeting}, ${name}` : timeGreeting;
 
   const total = data?.totalProblems || 0;
   const statusCounts = data?.statusCounts || {};
@@ -109,7 +113,7 @@ export default function Dashboard() {
               lineHeight: 1.2,
             }}
           >
-            <TextEffect per="word">{greeting}</TextEffect> 👋
+            <TextEffect key={greeting} per="word">{greeting}</TextEffect> 👋
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Here is your daily algorithmic practice summary and retention status.

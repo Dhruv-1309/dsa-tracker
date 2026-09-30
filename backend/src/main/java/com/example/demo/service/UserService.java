@@ -27,6 +27,7 @@ public class UserService {
     private final MistakeTagRepository mistakeTagRepository;
     private final FriendConnectionRepository friendConnectionRepository;
     private final PasswordEncoder passwordEncoder;
+    private final com.example.demo.security.TokenBlacklistService tokenBlacklistService;
 
     public UserProfileResponse getProfile(UUID userId) {
         User user = userRepository.findById(userId)
@@ -69,6 +70,9 @@ public class UserService {
 
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+
+        // Revoke all existing JWTs issued prior to password change
+        tokenBlacklistService.revokeTokensForUserBefore(userId.toString(), System.currentTimeMillis());
     }
 
     @Transactional

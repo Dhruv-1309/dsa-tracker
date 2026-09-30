@@ -120,4 +120,49 @@ class RateLimitingFilterTest {
             assertThat(response.getStatus()).isEqualTo(200);
         }
     }
+
+    @Test
+    @DisplayName("Spoofed X-Forwarded-For header cannot bypass rate limit")
+    void testSpoofedXForwardedForCannotBypassRateLimit() throws Exception {
+        // Send 5 requests with the same remoteAddr but different spoofed X-Forwarded-For headers
+        for (int i = 1; i <= 5; i++) {
+            MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/auth/login");
+            request.setRemoteAddr("198.51.100.5");
+            request.addHeader("X-Forwarded-For", "203.0.113." + i);
+            MockHttpServletResponse response = new MockHttpServletResponse();
+
+            filter.doFilterInternal(request, response, filterChain);
+            assertThat(response.getStatus()).isEqualTo(200);
+        }
+
+        // 6th attempt with yet another spoofed X-Forwarded-For should still be blocked (429)
+        MockHttpServletRequest blockedRequest = new MockHttpServletRequest("POST", "/api/auth/login");
+        blockedRequest.setRemoteAddr("198.51.100.5");
+        blockedRequest.addHeader("X-Forwarded-For", "203.0.113.99");
+        MockHttpServletResponse blockedResponse = new MockHttpServletResponse();
+
+        filter.doFilterInternal(blockedRequest, blockedResponse, filterChain);
+        assertThat(blockedResponse.getStatus()).isEqualTo(429);
+        assertThat(blockedResponse.getContentAsString()).contains("Too many authentication attempts");
+    }
+
+    @Test
+    @DisplayName("RateLimitingFilter evicts stale entries when tracked bucket count grows large")
+    void testStaleRateLimitBucketsAreEvicted() throws Exception {
+        // Generate requests across 250 distinct IPs to trigger cleanup threshold (> 200)
+        for (int i = 1; i <= 250; i++) {
+            MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/problems");
+            request.setRemoteAddr("10.0." + (i / 256) + "." + (i % 256));
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            filter.doFilterInternal(request, response, filterChain);
+            assertThat(response.getStatus()).isEqualTo(200);
+        }
+
+        // New request should succeed normally without memory explosion
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/problems");
+        request.setRemoteAddr("10.0.99.99");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        filter.doFilterInternal(request, response, filterChain);
+        assertThat(response.getStatus()).isEqualTo(200);
+    }
 }

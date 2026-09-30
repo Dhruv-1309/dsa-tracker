@@ -57,6 +57,14 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             long now = System.currentTimeMillis();
 
             synchronized (requestCounts) {
+                // Periodically evict idle buckets to prevent memory exhaustion
+                if (requestCounts.size() > 200) {
+                    requestCounts.entrySet().removeIf(entry -> {
+                        Deque<Long> dq = entry.getValue();
+                        return dq == null || dq.isEmpty() || (now - dq.peekLast() > WINDOW_MS);
+                    });
+                }
+
                 Deque<Long> timestamps = requestCounts.computeIfAbsent(bucketKey, k -> new ArrayDeque<>());
 
                 // Purge expired timestamps outside the 1-minute window
@@ -102,10 +110,10 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
 
     private String extractClientIp(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.trim().isEmpty()) {
-            return xForwardedFor.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
+        // Use request.getRemoteAddr() which is securely populated and sanitized by Spring Boot's
+        // ForwardedHeaderFilter (server.forward-headers-strategy: framework).
+        // Directly trusting the raw X-Forwarded-For header allows malicious clients to trivially bypass rate limits by spoofing IPs.
+        String remoteAddr = request.getRemoteAddr();
+        return (remoteAddr != null && !remoteAddr.isBlank()) ? remoteAddr : "unknown";
     }
 }

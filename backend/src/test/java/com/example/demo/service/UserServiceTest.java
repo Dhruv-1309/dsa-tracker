@@ -46,6 +46,9 @@ class UserServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private com.example.demo.security.TokenBlacklistService tokenBlacklistService;
+
     @InjectMocks
     private UserService userService;
 
@@ -63,7 +66,7 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("changePassword updates password hash when current password matches")
+    @DisplayName("changePassword updates password hash and revokes prior tokens when current password matches")
     void changePassword_success() {
         when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
         when(passwordEncoder.matches("oldPass123", "hashedOldPassword")).thenReturn(true);
@@ -78,6 +81,7 @@ class UserServiceTest {
 
         assertEquals("hashedNewPass", testUser.getPasswordHash());
         verify(userRepository, times(1)).save(testUser);
+        verify(tokenBlacklistService, times(1)).revokeTokensForUserBefore(eq(testUserId.toString()), anyLong());
     }
 
     @Test
