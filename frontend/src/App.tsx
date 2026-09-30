@@ -21,6 +21,8 @@ const TopicsPage = lazy(() => import('./pages/TopicsPage'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Friends = lazy(() => import('./pages/Friends'));
 const FriendSummaryView = lazy(() => import('./pages/FriendSummaryView'));
+const Privacy = lazy(() => import('./pages/Privacy'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Aggressive caching to eliminate repeated network calls
 const queryClient = new QueryClient({
@@ -52,6 +54,7 @@ function App() {
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/privacy" element={<Privacy />} />
                 <Route element={<ProtectedRoute />}>
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/problems" element={<ProblemList />} />
@@ -65,6 +68,7 @@ function App() {
                   <Route path="/problems/:id/edit" element={<ProblemForm />} />
                   <Route path="/problems/:id/attempts" element={<ProblemAttempts />} />
                 </Route>
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
           </BrowserRouter>

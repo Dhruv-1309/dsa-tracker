@@ -21,7 +21,7 @@ export const theme = createTheme({
     },
     text: {
       primary: '#171A2B',
-      secondary: '#64748B',
+      secondary: '#475569',
     },
     divider: '#E3E6EF',
     error: {

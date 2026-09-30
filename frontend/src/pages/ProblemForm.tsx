@@ -253,7 +253,17 @@ export default function ProblemForm() {
           body: JSON.stringify(updatePayload),
         });
 
-        if (!res.ok) throw new Error('Failed to update problem.');
+        if (!res.ok) {
+          const errText = await res.text();
+          let msg = '';
+          try {
+            const j = JSON.parse(errText);
+            msg = j.error || j.message;
+          } catch {
+            msg = errText;
+          }
+          throw new Error(msg || 'Failed to update problem.');
+        }
         queryClient.invalidateQueries({ queryKey: ['problems'] });
         queryClient.invalidateQueries({ queryKey: ['problem', id] });
         navigate(`/problems/${id}/attempts`);
@@ -276,7 +286,14 @@ export default function ProblemForm() {
 
         if (!res.ok) {
           const errText = await res.text();
-          throw new Error(errText || 'Failed to create problem.');
+          let msg = '';
+          try {
+            const j = JSON.parse(errText);
+            msg = j.error || j.message;
+          } catch {
+            msg = errText;
+          }
+          throw new Error(msg || 'Failed to create problem.');
         }
 
         const createdProblem: Problem = await res.json();

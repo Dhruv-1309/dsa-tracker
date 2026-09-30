@@ -54,7 +54,8 @@ export default function Login() {
         setToken(data.token);
         navigate('/dashboard');
       } else {
-        setError('Invalid email or password. Please try again.');
+        const errJson = await res.json().catch(() => null);
+        setError(errJson?.error || errJson?.message || 'Invalid email or password. Please try again.');
       }
     } catch {
       setError('Unable to reach server. Please check your connection.');
@@ -347,6 +348,20 @@ export default function Login() {
                   Create an account
                 </Link>
               </Typography>
+              <Box sx={{ mt: 1.5 }}>
+                <Link
+                  component={RouterLink}
+                  to="/privacy"
+                  sx={{
+                    color: '#64748B',
+                    fontSize: '0.8rem',
+                    textDecoration: 'none',
+                    '&:hover': { textDecoration: 'underline', color: '#4F3FF0' },
+                  }}
+                >
+                  Privacy Policy
+                </Link>
+              </Box>
             </Box>
           </Box>
         </Box>

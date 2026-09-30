@@ -124,6 +124,7 @@ export default function Friends() {
       if (!res.ok) {
         const errJson = await res.json().catch(() => null);
         const errorMsg =
+          errJson?.error ||
           errJson?.message ||
           (res.status === 404
             ? 'User not found with provided friend code'
@@ -131,6 +132,8 @@ export default function Friends() {
             ? 'Cannot send friend request to yourself'
             : res.status === 409
             ? 'Friend request already sent or you are already friends'
+            : res.status === 429
+            ? 'Too many friend requests sent. Please try again after 60 seconds.'
             : 'Failed to send friend request');
         throw new Error(errorMsg);
       }
@@ -273,6 +276,8 @@ export default function Friends() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: 1.5,
                   p: 2,
                   borderRadius: 2,
                   backgroundColor: '#F8FAFC',
@@ -470,9 +475,9 @@ export default function Friends() {
           <TableContainer
             component={Paper}
             elevation={0}
-            sx={{ borderRadius: 3, border: '1px solid #E3E6EF' }}
+            sx={{ borderRadius: 3, border: '1px solid #E3E6EF', overflowX: 'auto' }}
           >
-            <Table>
+            <Table sx={{ minWidth: 460 }}>
               <TableHead>
                 <TableRow>
                   <TableCell>Requester</TableCell>
@@ -573,9 +578,9 @@ export default function Friends() {
           <TableContainer
             component={Paper}
             elevation={0}
-            sx={{ borderRadius: 3, border: '1px solid #E3E6EF' }}
+            sx={{ borderRadius: 3, border: '1px solid #E3E6EF', overflowX: 'auto' }}
           >
-            <Table>
+            <Table sx={{ minWidth: 460 }}>
               <TableHead>
                 <TableRow>
                   <TableCell>Name</TableCell>

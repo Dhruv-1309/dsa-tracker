@@ -175,8 +175,8 @@ export default function ProblemList({
 const COLOR_TOKENS = {
   ink: '#171A2B',        // Primary text, titles, headings
   slate: '#475569',      // Secondary labels, topic chips
-  muted: '#64748B',      // Captions, table headers, reset actions
-  subtle: '#94A3B8',     // Input icons, placeholders
+  muted: '#475569',      // Captions, table headers, reset actions (WCAG AA compliant)
+  subtle: '#64748B',     // Input icons, subtle labels
   accent: '#4F3FF0',     // Primary brand links & buttons
   accentHover: '#3E30D6',
   success: '#047857',    // Consolidated green: Easy badge, Solved status, Solved date
@@ -642,7 +642,7 @@ const filterControlSx = {
           sx={{
             borderRadius: RADIUS.container,
             border: '1px solid #E3E6EF',
-            overflow: 'hidden',
+            overflowX: 'auto',
             position: 'relative',
           }}
         >

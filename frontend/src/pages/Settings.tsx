@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -154,7 +154,7 @@ export default function Settings() {
         setPasswordError('Current password is incorrect');
       } else {
         const errorData = await res.json().catch(() => null);
-        setPasswordError(errorData?.error || 'Failed to update password. Please try again.');
+        setPasswordError(errorData?.error || errorData?.message || 'Failed to update password. Please try again.');
       }
     } catch {
       setPasswordError('Network error. Unable to reach server.');
@@ -533,6 +533,56 @@ export default function Settings() {
                 </Button>
               </Box>
             </Stack>
+          </Box>
+
+          <Divider sx={{ my: 4 }} />
+
+          {/* Privacy & Transparency Section */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              justifyContent: 'space-between',
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: 2,
+            }}
+          >
+            <Box>
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontFamily: '"Space Grotesk", sans-serif',
+                  fontWeight: 600,
+                  color: '#171A2B',
+                }}
+              >
+                Privacy & Data
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#64748B' }}>
+                Understand what data is saved, how friend sharing operates, and your data ownership.
+              </Typography>
+            </Box>
+
+            <Button
+              component={RouterLink}
+              to="/privacy"
+              variant="outlined"
+              sx={{
+                borderRadius: 2,
+                px: 2.5,
+                py: 1,
+                fontWeight: 600,
+                color: '#4F3FF0',
+                borderColor: '#E3E6EF',
+                whiteSpace: 'nowrap',
+                '&:hover': {
+                  borderColor: '#4F3FF0',
+                  backgroundColor: '#EEEBFF',
+                },
+              }}
+            >
+              View Privacy Policy
+            </Button>
           </Box>
 
           <Divider sx={{ my: 4 }} />

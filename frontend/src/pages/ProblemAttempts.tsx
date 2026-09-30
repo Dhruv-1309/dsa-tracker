@@ -162,7 +162,11 @@ export default function ProblemAttempts() {
         method: 'POST',
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error('Failed to save attempt');
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => null);
+        const errText = !errJson ? await res.text().catch(() => '') : '';
+        throw new Error(errJson?.error || errJson?.message || errText || 'Failed to save attempt');
+      }
       return res.json();
     },
     onSuccess: () => {
@@ -622,6 +626,12 @@ export default function ProblemAttempts() {
                         onChange={(e) => setNewMistakes(e.target.value)}
                       />
                     </Box>
+
+                    {attemptMutation.isError && (
+                      <Alert severity="error" sx={{ borderRadius: 2 }}>
+                        {attemptMutation.error instanceof Error ? attemptMutation.error.message : 'Failed to save attempt. Please verify your inputs.'}
+                      </Alert>
+                    )}
 
                     <Stack direction="row" spacing={1.5} sx={{ justifyContent: 'flex-end' }}>
                       <Button variant="outlined" onClick={() => setShowNewAttemptForm(false)}>

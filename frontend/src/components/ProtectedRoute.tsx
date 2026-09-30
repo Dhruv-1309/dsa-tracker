@@ -1,6 +1,7 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Navbar from './Navbar';
+import Footer from './Footer';
 import { Box } from '@mui/material';
 
 export function ProtectedRoute() {
@@ -16,6 +17,7 @@ export function ProtectedRoute() {
             <Box component="main" sx={{ flexGrow: 1 }}>
                 <Outlet />
             </Box>
+            <Footer />
         </Box>
     );
 }

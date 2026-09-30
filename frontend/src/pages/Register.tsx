@@ -59,7 +59,14 @@ export default function Register() {
         navigate('/login');
       } else {
         const text = await res.text();
-        setError(text || 'Registration failed. This email may already be registered.');
+        let message = '';
+        try {
+          const json = JSON.parse(text);
+          message = json.error || json.message;
+        } catch {
+          message = text;
+        }
+        setError(message || 'Registration failed. This email may already be registered.');
       }
     } catch {
       setError('Unable to reach server. Please check your connection.');
@@ -357,6 +364,20 @@ export default function Register() {
                   Sign in
                 </Link>
               </Typography>
+              <Box sx={{ mt: 1.5 }}>
+                <Link
+                  component={RouterLink}
+                  to="/privacy"
+                  sx={{
+                    color: '#64748B',
+                    fontSize: '0.8rem',
+                    textDecoration: 'none',
+                    '&:hover': { textDecoration: 'underline', color: '#0E9F6E' },
+                  }}
+                >
+                  Privacy Policy
+                </Link>
+              </Box>
             </Box>
           </Box>
         </Box>

@@ -40,10 +40,17 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         String uri = request.getRequestURI();
 
         if (uri.startsWith("/api/")) {
+            String method = request.getMethod();
             boolean isAuthEndpoint = uri.equals("/api/auth/login") || uri.equals("/api/auth/register");
-            int maxAllowed = isAuthEndpoint ? MAX_AUTH_ATTEMPTS : MAX_API_ATTEMPTS;
+            boolean isFriendRequest = "POST".equalsIgnoreCase(method) &&
+                    (uri.equals("/api/friends/requests") || uri.equals("/api/v1/friends/requests"));
+            boolean isPasswordChange = ("PATCH".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method)) &&
+                    (uri.endsWith("/users/me/password") || uri.endsWith("/user/me/password"));
+
+            boolean isSensitiveEndpoint = isAuthEndpoint || isFriendRequest || isPasswordChange;
+            int maxAllowed = isSensitiveEndpoint ? MAX_AUTH_ATTEMPTS : MAX_API_ATTEMPTS;
             String clientIp = extractClientIp(request);
-            String bucketKey = (isAuthEndpoint ? "auth:" + uri : "api:") + clientIp;
+            String bucketKey = (isSensitiveEndpoint ? "sensitive:" + method + ":" + uri : "api:") + ":" + clientIp;
             long now = System.currentTimeMillis();
 
             synchronized (requestCounts) {
@@ -60,12 +67,20 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                     response.setHeader("Retry-After", "60");
 
                     String correlationId = UUID.randomUUID().toString();
-                    String message = isAuthEndpoint
-                            ? "Too many authentication attempts. Please try again after 60 seconds."
-                            : "Too many API requests. Please slow down.";
+                    String message;
+                    if (isAuthEndpoint) {
+                        message = "Too many authentication attempts. Please try again after 60 seconds.";
+                    } else if (isFriendRequest) {
+                        message = "Too many friend requests sent. Please try again after 60 seconds.";
+                    } else if (isPasswordChange) {
+                        message = "Too many password change attempts. Please try again after 60 seconds.";
+                    } else {
+                        message = "Too many API requests. Please slow down.";
+                    }
 
                     String json = String.format(
-                            "{\"error\":\"%s\",\"status\":429,\"correlationId\":\"%s\",\"timestamp\":\"%s\"}",
+                            "{\"error\":\"%s\",\"message\":\"%s\",\"status\":429,\"correlationId\":\"%s\",\"timestamp\":\"%s\"}",
+                            message,
                             message,
                             correlationId,
                             Instant.now().toString()

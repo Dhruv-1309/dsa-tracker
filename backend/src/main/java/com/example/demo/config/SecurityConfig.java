@@ -68,6 +68,14 @@ public class SecurityConfig {
         List<String> origins = Arrays.stream(allowedOrigins.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
+                .filter(s -> {
+                    // Local development allows http://localhost and http://127.0.0.1
+                    if (s.contains("localhost") || s.contains("127.0.0.1")) {
+                        return true;
+                    }
+                    // Production origins must enforce HTTPS
+                    return s.startsWith("https://");
+                })
                 .collect(Collectors.toList());
 
         configuration.setAllowedOriginPatterns(origins);

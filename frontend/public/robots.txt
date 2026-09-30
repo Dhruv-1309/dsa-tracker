@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /login
+Allow: /register
+Allow: /privacy
+Disallow: /dashboard
+Disallow: /problems
+Disallow: /queue
+Disallow: /topics
+Disallow: /friends
+Disallow: /settings
+Disallow: /api/
+
+Sitemap: https://dsa-tracker.vercel.app/sitemap.xml
