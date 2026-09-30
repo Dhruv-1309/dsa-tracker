@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -8,6 +8,7 @@ import {
   Stack,
   Divider,
   Chip,
+  Link,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SecurityOutlinedIcon from '@mui/icons-material/SecurityOutlined';
@@ -25,7 +26,13 @@ export default function Privacy() {
     <Container maxWidth="md" sx={{ py: { xs: 4, sm: 6 } }}>
       {/* Header bar with Logo and Return navigation */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
-        <Logo size={28} />
+        <Link
+          component={RouterLink}
+          to={token ? '/dashboard' : '/login'}
+          sx={{ display: 'inline-flex', textDecoration: 'none', color: 'inherit' }}
+        >
+          <Logo size={28} />
+        </Link>
         <Button
           variant="outlined"
           size="small"
@@ -198,6 +205,10 @@ export default function Privacy() {
               <strong>Notice:</strong> This document represents a plain-language transparency summary describing how the application processes and shares data. It is intended for informational clarity and does not constitute formal legal counsel.
             </Typography>
           </Box>
+
+          <Typography variant="caption" sx={{ color: '#94A3B8', display: 'block', textAlign: 'center', pt: 1 }}>
+            Last updated: September 30, 2026
+          </Typography>
         </Stack>
       </Paper>
     </Container>

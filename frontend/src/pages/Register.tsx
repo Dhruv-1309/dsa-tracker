@@ -129,7 +129,13 @@ export default function Register() {
           <div>
             {/* Logo Header */}
             <Box sx={{ mb: 6 }}>
-              <Logo size={36} variant="inverted" />
+              <Link
+                component={RouterLink}
+                to="/"
+                sx={{ display: 'inline-flex', textDecoration: 'none', color: 'inherit' }}
+              >
+                <Logo size={36} variant="inverted" />
+              </Link>
             </Box>
 
             <Chip

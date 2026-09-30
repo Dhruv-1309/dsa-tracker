@@ -25,7 +25,16 @@ export default function Footer() {
           }}
         >
           <Typography variant="body2" sx={{ color: '#64748B', fontSize: '0.85rem' }}>
-            © {currentYear} DSA Tracker. Built for systematic interview mastery.
+            © {currentYear}{' '}
+            <Link
+              component={RouterLink}
+              to="/"
+              underline="hover"
+              sx={{ color: '#171A2B', fontWeight: 600, '&:hover': { color: '#4F3FF0' } }}
+            >
+              DSA Tracker
+            </Link>
+            . Built for systematic interview mastery.
           </Typography>
 
           <Stack direction="row" spacing={3} sx={{ alignItems: 'center' }}>

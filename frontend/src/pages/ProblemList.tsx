@@ -643,6 +643,7 @@ const filterControlSx = {
             borderRadius: RADIUS.container,
             border: '1px solid #E3E6EF',
             overflowX: 'auto',
+            maxHeight: 'calc(100vh - 200px)',
             position: 'relative',
           }}
         >
@@ -654,13 +655,13 @@ const filterControlSx = {
                 left: 0,
                 right: 0,
                 height: 3,
-                zIndex: 2,
+                zIndex: 3,
                 backgroundColor: 'transparent',
                 '& .MuiLinearProgress-bar': { backgroundColor: COLOR_TOKENS.accent },
               }}
             />
           )}
-          <Table sx={{ minWidth: 720 }}>
+          <Table stickyHeader sx={{ minWidth: 720, '& .MuiTableCell-stickyHeader': { backgroundColor: '#FFFFFF', zIndex: 2 } }}>
             <TableHead>
               <TableRow>
                 <TableCell sx={{ width: '33%', fontWeight: 600, color: COLOR_TOKENS.muted }}>Problem Title</TableCell>

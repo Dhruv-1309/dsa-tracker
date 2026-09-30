@@ -1,5 +1,5 @@
 import { Link as RouterLink } from 'react-router-dom';
-import { Box, Typography, Button, Paper, Stack } from '@mui/material';
+import { Box, Typography, Button, Paper, Stack, Link } from '@mui/material';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import Logo from '../components/Logo';
@@ -22,7 +22,13 @@ export default function NotFound() {
       }}
     >
       <Box sx={{ mb: 4 }}>
-        <Logo size={32} />
+        <Link
+          component={RouterLink}
+          to={token ? '/dashboard' : '/login'}
+          sx={{ display: 'inline-flex', textDecoration: 'none', color: 'inherit' }}
+        >
+          <Logo size={32} />
+        </Link>
       </Box>
 
       <Paper

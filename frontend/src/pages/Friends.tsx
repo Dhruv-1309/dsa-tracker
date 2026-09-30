@@ -50,6 +50,7 @@ export default function Friends() {
   // Dialog state
   const [regenConfirmOpen, setRegenConfirmOpen] = useState(false);
   const [removeFriendTarget, setRemoveFriendTarget] = useState<Friend | null>(null);
+  const [declineTarget, setDeclineTarget] = useState<{ id: string; name: string } | null>(null);
 
   // 1. Fetch current user's friend code
   const { data: codeData, isLoading: codeLoading } = useQuery<FriendCodeResponse>({
@@ -515,7 +516,7 @@ export default function Friends() {
                           variant="outlined"
                           color="inherit"
                           disabled={acceptMutation.isPending || declineMutation.isPending}
-                          onClick={() => declineMutation.mutate(req.id)}
+                          onClick={() => setDeclineTarget({ id: req.id, name: req.requesterName })}
                           sx={{ borderRadius: 2, fontWeight: 600, fontSize: '0.75rem', px: 1.8, color: '#64748B' }}
                         >
                           Decline
@@ -704,6 +705,45 @@ export default function Friends() {
             sx={{ borderRadius: 2, fontWeight: 600 }}
           >
             {removeMutation.isPending ? <CircularProgress size={18} color="inherit" /> : 'Remove Friend'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Confirmation Dialog: Decline Request */}
+      <Dialog
+        open={Boolean(declineTarget)}
+        onClose={() => setDeclineTarget(null)}
+        maxWidth="xs"
+        fullWidth
+        slotProps={{
+          paper: { sx: { borderRadius: 3, p: 1 } },
+        }}
+      >
+        <DialogTitle sx={{ fontFamily: '"Space Grotesk", sans-serif', fontWeight: 700 }}>
+          Decline Friend Request?
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ color: '#475569', fontSize: '0.9rem' }}>
+            Are you sure you want to decline the friend request from <strong>{declineTarget?.name}</strong>?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setDeclineTarget(null)} sx={{ color: '#64748B' }}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => {
+              if (declineTarget) {
+                declineMutation.mutate(declineTarget.id);
+                setDeclineTarget(null);
+              }
+            }}
+            disabled={declineMutation.isPending}
+            sx={{ borderRadius: 2, fontWeight: 600 }}
+          >
+            {declineMutation.isPending ? <CircularProgress size={18} color="inherit" /> : 'Decline Request'}
           </Button>
         </DialogActions>
       </Dialog>

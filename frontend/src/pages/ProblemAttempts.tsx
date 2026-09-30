@@ -24,6 +24,7 @@ import {
   FormControlLabel,
   Collapse,
   IconButton,
+  Tooltip,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
@@ -34,6 +35,8 @@ import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined
 import PsychologyAltIcon from '@mui/icons-material/PsychologyAlt';
 import CloseIcon from '@mui/icons-material/Close';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import CheckIcon from '@mui/icons-material/Check';
 import type { FriendProblemDetailResponse } from '../types/friend';
 
 const CONFIDENCE_OPTIONS = [
@@ -77,6 +80,15 @@ export default function ProblemAttempts() {
   const [newLanguage, setNewLanguage] = useState('Python');
   const [newApproach, setNewApproach] = useState('');
   const [newMistakes, setNewMistakes] = useState('');
+  const [copiedAttemptId, setCopiedAttemptId] = useState<string | null>(null);
+
+  const handleCopyCode = (attemptId: string, codeText: string) => {
+    navigator.clipboard.writeText(codeText);
+    setCopiedAttemptId(attemptId);
+    setTimeout(() => {
+      setCopiedAttemptId((curr) => (curr === attemptId ? null : curr));
+    }, 2000);
+  };
 
   // Fetch friend problem detail if viewing as friend
   const {
@@ -905,9 +917,40 @@ export default function ProblemAttempts() {
                     {/* Solution Code */}
                     {a.code && (
                       <Box sx={{ mt: 2 }}>
-                        <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155', display: 'block', mb: 0.75 }}>
-                          Solution Code ({a.language || 'Code'})
-                        </Typography>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
+                          <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155' }}>
+                            Solution Code ({a.language || 'Code'})
+                          </Typography>
+                          <Tooltip title={copiedAttemptId === a.id ? 'Copied to clipboard!' : 'Copy code'} arrow>
+                            <Button
+                              size="small"
+                              variant="text"
+                              startIcon={
+                                copiedAttemptId === a.id ? (
+                                  <CheckIcon sx={{ fontSize: 14, color: '#10B981' }} />
+                                ) : (
+                                  <ContentCopyIcon sx={{ fontSize: 14 }} />
+                                )
+                              }
+                              onClick={() => handleCopyCode(a.id, a.code!)}
+                              sx={{
+                                fontSize: '0.725rem',
+                                py: 0.25,
+                                px: 1,
+                                minHeight: 'unset',
+                                color: copiedAttemptId === a.id ? '#10B981' : '#64748B',
+                                textTransform: 'none',
+                                fontWeight: 600,
+                                '&:hover': {
+                                  color: copiedAttemptId === a.id ? '#10B981' : '#4F3FF0',
+                                  backgroundColor: '#F1F5F9',
+                                },
+                              }}
+                            >
+                              {copiedAttemptId === a.id ? 'Copied' : 'Copy'}
+                            </Button>
+                          </Tooltip>
+                        </Box>
                         <Paper
                           elevation={0}
                           sx={{

@@ -178,6 +178,11 @@ export default function Navbar() {
                 border: '1px solid #E3E6EF',
                 borderRadius: 2,
                 backgroundColor: '#F8FAFC',
+                transition: 'all 0.15s ease',
+                '&:hover': {
+                  backgroundColor: '#F1F5F9',
+                  borderColor: '#CBD5E1',
+                },
               }}
             >
               <AccountCircleOutlinedIcon sx={{ color: '#475569' }} />
