@@ -7,24 +7,53 @@
     <link rel="apple-touch-icon" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DSA Tracker — Master Data Structures & Algorithms</title>
-    <meta name="description" content="Systematic technical interview prep tracker with spaced repetition, attempt logs, blind-mode reviews, and peer problem sharing." />
+    <meta name="description" content="Master DSA with spaced repetition, detailed attempt tracking, mistake analytics, and peer problem sharing." />
     <link rel="canonical" href="https://dsa-tracker.vercel.app/" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="DSA Tracker" />
     <meta property="og:url" content="https://dsa-tracker.vercel.app/" />
     <meta property="og:title" content="DSA Tracker — Master Data Structures & Algorithms" />
-    <meta property="og:description" content="Systematic technical interview prep tracker with spaced repetition, attempt logs, blind-mode reviews, and peer problem sharing." />
+    <meta property="og:description" content="Master DSA with spaced repetition, detailed attempt tracking, mistake analytics, and peer problem sharing." />
     <meta property="og:image" content="https://dsa-tracker.vercel.app/og-image.png" />
+    <meta property="og:image:secure_url" content="https://dsa-tracker.vercel.app/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="DSA Tracker — Master Data Structures & Algorithms" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://dsa-tracker.vercel.app/" />
     <meta name="twitter:title" content="DSA Tracker — Master Data Structures & Algorithms" />
-    <meta name="twitter:description" content="Systematic technical interview prep tracker with spaced repetition, attempt logs, blind-mode reviews, and peer problem sharing." />
+    <meta name="twitter:description" content="Master DSA with spaced repetition, detailed attempt tracking, mistake analytics, and peer problem sharing." />
     <meta name="twitter:image" content="https://dsa-tracker.vercel.app/og-image.png" />
+    <meta name="twitter:image:alt" content="DSA Tracker — Master Data Structures & Algorithms" />
+
+    <script>
+      (function() {
+        try {
+          var origin = window.location.origin;
+          if (origin && origin.startsWith('http') && !origin.includes('dsa-tracker.vercel.app')) {
+            var updateHref = function(sel) {
+              var el = document.querySelector(sel);
+              if (el) el.href = origin + window.location.pathname;
+            };
+            var updateContent = function(sel, path) {
+              var el = document.querySelector(sel);
+              if (el) el.content = origin + (path || window.location.pathname);
+            };
+            updateHref('link[rel="canonical"]');
+            updateContent('meta[property="og:url"]');
+            updateContent('meta[property="og:image"]', '/og-image.png');
+            updateContent('meta[property="og:image:secure_url"]', '/og-image.png');
+            updateContent('meta[name="twitter:url"]');
+            updateContent('meta[name="twitter:image"]', '/og-image.png');
+          }
+        } catch (_) {}
+      })();
+    </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
