@@ -348,7 +348,38 @@ export default function Register() {
               />
             </Box>
 
-            <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid #F1F5F9', textAlign: 'center' }}>
+            {/* Terms and Privacy notice */}
+            <Typography
+              variant="caption"
+              sx={{
+                display: 'block',
+                textAlign: 'center',
+                color: '#64748B',
+                mt: 2.5,
+                fontSize: '0.78rem',
+                lineHeight: 1.5,
+              }}
+            >
+              By signing up, you agree to our{' '}
+              <Link
+                component={RouterLink}
+                to="/terms"
+                sx={{ color: '#0E9F6E', textDecoration: 'underline', fontWeight: 500 }}
+              >
+                Terms & Conditions
+              </Link>{' '}
+              and{' '}
+              <Link
+                component={RouterLink}
+                to="/privacy"
+                sx={{ color: '#0E9F6E', textDecoration: 'underline', fontWeight: 500 }}
+              >
+                Privacy Policy
+              </Link>
+              .
+            </Typography>
+
+            <Box sx={{ mt: 3, pt: 2.5, borderTop: '1px solid #F1F5F9', textAlign: 'center' }}>
               <Typography variant="body2" color="text.secondary">
                 Already have an account?{' '}
                 <Link
@@ -364,7 +395,20 @@ export default function Register() {
                   Sign in
                 </Link>
               </Typography>
-              <Box sx={{ mt: 1.5 }}>
+              <Stack direction="row" spacing={1.5} sx={{ justifyContent: 'center', mt: 1.5, alignItems: 'center' }}>
+                <Link
+                  component={RouterLink}
+                  to="/terms"
+                  sx={{
+                    color: '#64748B',
+                    fontSize: '0.8rem',
+                    textDecoration: 'none',
+                    '&:hover': { textDecoration: 'underline', color: '#0E9F6E' },
+                  }}
+                >
+                  Terms & Conditions
+                </Link>
+                <Typography variant="caption" sx={{ color: '#CBD5E1' }}>•</Typography>
                 <Link
                   component={RouterLink}
                   to="/privacy"
@@ -377,7 +421,7 @@ export default function Register() {
                 >
                   Privacy Policy
                 </Link>
-              </Box>
+              </Stack>
             </Box>
           </Box>
         </Box>

@@ -39,15 +39,18 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
         String uri = request.getRequestURI();
 
-        if (uri.startsWith("/api/")) {
+        if (uri.startsWith("/api/") || uri.startsWith("/auth/")) {
             String method = request.getMethod();
-            boolean isAuthEndpoint = uri.equals("/api/auth/login") || uri.equals("/api/auth/register");
+            boolean isRegister = "POST".equalsIgnoreCase(method) &&
+                    (uri.equals("/api/auth/register") || uri.equals("/auth/register") || uri.endsWith("/auth/register"));
+            boolean isLogin = "POST".equalsIgnoreCase(method) &&
+                    (uri.equals("/api/auth/login") || uri.equals("/auth/login") || uri.endsWith("/auth/login"));
             boolean isFriendRequest = "POST".equalsIgnoreCase(method) &&
-                    (uri.equals("/api/friends/requests") || uri.equals("/api/v1/friends/requests"));
+                    (uri.equals("/api/friends/requests") || uri.equals("/api/v1/friends/requests") || uri.endsWith("/friends/requests"));
             boolean isPasswordChange = ("PATCH".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method)) &&
                     (uri.endsWith("/users/me/password") || uri.endsWith("/user/me/password"));
 
-            boolean isSensitiveEndpoint = isAuthEndpoint || isFriendRequest || isPasswordChange;
+            boolean isSensitiveEndpoint = isRegister || isLogin || isFriendRequest || isPasswordChange;
             int maxAllowed = isSensitiveEndpoint ? MAX_AUTH_ATTEMPTS : MAX_API_ATTEMPTS;
             String clientIp = extractClientIp(request);
             String bucketKey = (isSensitiveEndpoint ? "sensitive:" + method + ":" + uri : "api:") + ":" + clientIp;
@@ -68,7 +71,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
                     String correlationId = UUID.randomUUID().toString();
                     String message;
-                    if (isAuthEndpoint) {
+                    if (isRegister) {
+                        message = "Too many registration attempts. Please try again after 60 seconds.";
+                    } else if (isLogin) {
                         message = "Too many authentication attempts. Please try again after 60 seconds.";
                     } else if (isFriendRequest) {
                         message = "Too many friend requests sent. Please try again after 60 seconds.";

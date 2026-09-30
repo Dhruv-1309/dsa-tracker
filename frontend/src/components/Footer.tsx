@@ -31,6 +31,19 @@ export default function Footer() {
           <Stack direction="row" spacing={3} sx={{ alignItems: 'center' }}>
             <Link
               component={RouterLink}
+              to="/terms"
+              underline="hover"
+              sx={{
+                color: '#64748B',
+                fontSize: '0.85rem',
+                fontWeight: 500,
+                '&:hover': { color: '#4F3FF0' },
+              }}
+            >
+              Terms & Conditions
+            </Link>
+            <Link
+              component={RouterLink}
               to="/privacy"
               underline="hover"
               sx={{
