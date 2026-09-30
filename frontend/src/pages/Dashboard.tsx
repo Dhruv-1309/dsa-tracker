@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useApiClient } from '../api/useApiClient';
@@ -19,7 +18,6 @@ import {
   Stack,
   LinearProgress,
   Tooltip,
-  Divider,
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AssignmentIcon from '@mui/icons-material/Assignment';
@@ -35,19 +33,6 @@ const STATUS_COLORS: Record<string, string> = {
   'Could not solve': '#8B7FF5',
   'Solved': '#4F3FF0',
   'Solved optimally': '#10B981',
-};
-
-const canonicalPlatformName = (name: string): string => {
-  const clean = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-  if (clean === 'geekforgeeks' || clean === 'geeksforgeeks' || clean === 'gfg') {
-    return 'GeeksforGeeks';
-  }
-  if (clean === 'leetcode') return 'LeetCode';
-  if (clean === 'codeforces') return 'Codeforces';
-  if (clean === 'hackerrank') return 'HackerRank';
-  if (clean === 'codechef') return 'CodeChef';
-  if (clean === 'neetcode') return 'NeetCode';
-  return name.trim();
 };
 
 export default function Dashboard() {
@@ -95,17 +80,6 @@ export default function Dashboard() {
   const diffCounts = data?.difficultyCounts || {};
   const maxDiff = Math.max(...Object.values(diffCounts), 1);
   const sortedDiffs = Object.entries(diffCounts).sort((a, b) => b[1] - a[1]);
-
-  const platformCounts = data?.platformCounts || {};
-
-  const normalizedPlatformCounts = useMemo(() => {
-    const aggregated: Record<string, number> = {};
-    Object.entries(platformCounts).forEach(([name, count]) => {
-      const canonical = canonicalPlatformName(name);
-      aggregated[canonical] = (aggregated[canonical] || 0) + count;
-    });
-    return aggregated;
-  }, [platformCounts]);
 
   const queueCount = overdue.length + due.length;
 
@@ -602,62 +576,6 @@ export default function Dashboard() {
                       );
                     })}
                   </Stack>
-
-                  {Object.keys(normalizedPlatformCounts).length > 0 && (
-                    <Box sx={{ mt: 'auto', pt: 2 }}>
-                      <Divider sx={{ mb: 2, borderColor: '#F1F5F9' }} />
-                      <Typography
-                        variant="subtitle1"
-                        component="h3"
-                        sx={{
-                          fontFamily: '"Space Grotesk", sans-serif',
-                          fontWeight: 700,
-                          color: '#171A2B',
-                          mb: 1.5,
-                        }}
-                      >
-                        Platforms
-                      </Typography>
-                      <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1.25 }}>
-                        {Object.entries(normalizedPlatformCounts).map(([platform, count], idx) => {
-                          const platformColors = ['#4F3FF0', '#0E9F6E', '#D97706', '#8B7FF5', '#3B82F6', '#EC4899'];
-                          const color = platformColors[idx % platformColors.length];
-                          return (
-                            <Box
-                              key={platform}
-                              sx={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: 1,
-                                px: 1.5,
-                                py: 0.6,
-                                borderRadius: 1.5,
-                                backgroundColor: '#F8FAFC',
-                                border: '1px solid #E2E8F0',
-                              }}
-                            >
-                              <Box sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: color }} />
-                              <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 600, color: '#334155' }}>
-                                {platform}
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                sx={{
-                                  fontFamily: '"IBM Plex Mono", monospace',
-                                  fontWeight: 700,
-                                  color: '#64748B',
-                                  fontSize: '0.75rem',
-                                  ml: 0.25,
-                                }}
-                              >
-                                {count}
-                              </Typography>
-                            </Box>
-                          );
-                        })}
-                      </Stack>
-                    </Box>
-                  )}
                 </Paper>
               </Grid>
             </Grid>
