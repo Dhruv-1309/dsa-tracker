@@ -742,16 +742,33 @@ const filterControlSx = {
 
                   {/* Primary Topic */}
                   <TableCell>
-                    <Chip
-                      label={p.primaryTopicName || 'General'}
-                      size="small"
-                      sx={{
-                        backgroundColor: '#F1F5F9',
-                        color: COLOR_TOKENS.slate,
-                        fontWeight: 500,
-                        fontSize: '0.75rem',
-                      }}
-                    />
+                    <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', gap: 0.5 }}>
+                      <Chip
+                        label={p.primaryTopicName || 'General'}
+                        size="small"
+                        sx={{
+                          backgroundColor: '#F1F5F9',
+                          color: COLOR_TOKENS.slate,
+                          fontWeight: 500,
+                          fontSize: '0.75rem',
+                        }}
+                      />
+                      {p.extraTopicNames && p.extraTopicNames.length > 0 && (
+                        <Tooltip title={p.extraTopicNames.join(', ')}>
+                          <Chip
+                            label={`+${p.extraTopicNames.length}`}
+                            size="small"
+                            sx={{
+                              backgroundColor: 'transparent',
+                              color: COLOR_TOKENS.subtle,
+                              border: '1px solid #E2E8F0',
+                              fontWeight: 500,
+                              fontSize: '0.7rem',
+                            }}
+                          />
+                        </Tooltip>
+                      )}
+                    </Stack>
                   </TableCell>
 
                   {/* Difficulty */}

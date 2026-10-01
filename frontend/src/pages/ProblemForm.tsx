@@ -305,6 +305,32 @@ export default function ProblemForm() {
       finalTopicId = topics[0].id;
     }
 
+    // Process extra topics
+    const extraTopicIds: string[] = [];
+    if (extraTopicsText.trim()) {
+      const names = extraTopicsText.split(',').map((n) => n.trim()).filter(Boolean);
+      for (const name of names) {
+        const matched = topics.find((t) => t.name.toLowerCase() === name.toLowerCase());
+        if (matched) {
+          extraTopicIds.push(matched.id);
+        } else {
+          // Fallback creation for extra topics if they don't exist yet
+          try {
+            const res = await fetchApi('/topics', {
+              method: 'POST',
+              body: JSON.stringify({ name }),
+            });
+            if (res.ok) {
+              const newTopic: Topic = await res.json();
+              extraTopicIds.push(newTopic.id);
+            }
+          } catch {
+            // ignore
+          }
+        }
+      }
+    }
+
     try {
       if (isEdit) {
         // Edit mode: update problem metadata
@@ -314,6 +340,7 @@ export default function ProblemForm() {
           url: url.trim(),
           difficulty,
           primaryTopicId: finalTopicId,
+          extraTopicIds,
           optimalTime: optimalTime.trim(),
           optimalSpace: optimalSpace.trim(),
         };
@@ -345,6 +372,7 @@ export default function ProblemForm() {
           url: url.trim(),
           difficulty,
           primaryTopicId: finalTopicId,
+          extraTopicIds,
           optimalTime: optimalTime.trim(),
           optimalSpace: optimalSpace.trim(),
         };
