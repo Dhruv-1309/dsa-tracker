@@ -186,6 +186,85 @@ export default function ProblemForm() {
     retry: 2,
   });
 
+  // Custom topic creation state
+  const [showNewTopicBox, setShowNewTopicBox] = useState(false);
+  const [newTopicInput, setNewTopicInput] = useState('');
+  const [isCreatingTopic, setIsCreatingTopic] = useState(false);
+  const [topicCreateError, setTopicCreateError] = useState('');
+  const [topicSuccessMessage, setTopicSuccessMessage] = useState('');
+
+  const selectedTopic = useMemo(() => {
+    return topics.find((t) => t.id === primaryTopicId) || null;
+  }, [topics, primaryTopicId]);
+
+  const handleCreateTopic = async (rawName: string): Promise<Topic | null> => {
+    const trimmed = rawName.trim();
+    if (!trimmed) return null;
+    if (trimmed.length > 50) {
+      setTopicCreateError('Topic name must be 50 characters or less.');
+      return null;
+    }
+    setTopicCreateError('');
+
+    // Check if topic already exists in currently loaded list (case-insensitive)
+    const existing = topics.find(
+      (t) => t.name.toLowerCase() === trimmed.toLowerCase()
+    );
+    if (existing) {
+      setPrimaryTopicId(existing.id);
+      setTopicSuccessMessage(`Selected existing topic "${existing.name}".`);
+      setTimeout(() => setTopicSuccessMessage(''), 3000);
+      return existing;
+    }
+
+    setIsCreatingTopic(true);
+    try {
+      const res = await fetchApi('/topics', {
+        method: 'POST',
+        body: JSON.stringify({ name: trimmed }),
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        let msg = '';
+        try {
+          const j = JSON.parse(errText);
+          msg = j.error || j.message;
+        } catch {
+          msg = errText;
+        }
+        throw new Error(msg || 'Failed to create topic');
+      }
+
+      const newTopic: Topic = await res.json();
+
+      // Optimistically update React Query cache
+      queryClient.setQueryData<Topic[]>(['topics'], (old = []) => {
+        if (old.some((t) => t.id === newTopic.id)) return old;
+        return [...old, newTopic];
+      });
+      queryClient.invalidateQueries({ queryKey: ['topics'] });
+
+      setPrimaryTopicId(newTopic.id);
+      setTopicSuccessMessage(`Added "${newTopic.name}" to topics list.`);
+      setTimeout(() => setTopicSuccessMessage(''), 3000);
+      return newTopic;
+    } catch (err: any) {
+      setTopicCreateError(err.message || 'Failed to create topic.');
+      return null;
+    } finally {
+      setIsCreatingTopic(false);
+    }
+  };
+
+  const handleAddNewTopicFromBox = async () => {
+    if (!newTopicInput.trim()) return;
+    const created = await handleCreateTopic(newTopicInput);
+    if (created) {
+      setNewTopicInput('');
+      setShowNewTopicBox(false);
+    }
+  };
+
   // Fetch problem details if edit mode
   const { isLoading: isProblemLoading } = useQuery({
     queryKey: ['problem', id],
@@ -550,35 +629,245 @@ export default function ProblemForm() {
                           Failed to load topics. Please refresh.
                         </Alert>
                       ) : (
-                        <FormControl fullWidth size="small" disabled={isTopicsLoading}>
-                          <Select
-                            value={isTopicsLoading ? '' : (primaryTopicId || (topics[0]?.id ?? ''))}
-                            onChange={(e) => setPrimaryTopicId(e.target.value)}
-                            displayEmpty
-                            renderValue={(selected) => {
-                              if (isTopicsLoading) return 'Loading topics…';
-                              if (!selected && topics.length === 0) return 'No topics available';
-                              return topics.find((t) => t.id === selected)?.name ?? 'Select a topic';
+                        <Autocomplete<Topic, false, false, true>
+                          freeSolo
+                          selectOnFocus
+                          autoSelect
+                          clearOnBlur={false}
+                          handleHomeEndKeys
+                          disabled={isTopicsLoading}
+                          options={topics}
+                          getOptionLabel={(option) => {
+                            if (typeof option === 'string') return option;
+                            return option.name || '';
+                          }}
+                          isOptionEqualToValue={(option, value) => {
+                            if (!value) return false;
+                            if (typeof value === 'string') return option.name === value;
+                            return option.id === value.id;
+                          }}
+                          value={selectedTopic}
+                          onChange={async (_e, newValue) => {
+                            if (!newValue) {
+                              setPrimaryTopicId('');
+                              return;
+                            }
+                            if (typeof newValue === 'string') {
+                              const match = newValue.match(/^Add "(.+)"$/);
+                              const val = (match ? match[1] : newValue).trim();
+                              if (val) {
+                                await handleCreateTopic(val);
+                              }
+                            } else if (newValue.id === '__open_box__') {
+                              setShowNewTopicBox(true);
+                            } else if (newValue.id.startsWith('__new__:')) {
+                              const val = newValue.name.replace(/^Add "(.*)"$/, '$1').trim();
+                              if (val) {
+                                await handleCreateTopic(val);
+                              }
+                            } else {
+                              setPrimaryTopicId(newValue.id);
+                            }
+                          }}
+                          filterOptions={(options, params) => {
+                            const inputTrimmed = params.inputValue.trim();
+                            const filtered = options.filter((opt) =>
+                              opt.name.toLowerCase().includes(inputTrimmed.toLowerCase())
+                            );
+
+                            const exists = options.some(
+                              (opt) => opt.name.toLowerCase() === inputTrimmed.toLowerCase()
+                            );
+
+                            if (inputTrimmed !== '' && !exists) {
+                              filtered.push({
+                                id: `__new__:${inputTrimmed}`,
+                                name: `Add "${inputTrimmed}"`,
+                                isSystem: false,
+                                problemCount: 0,
+                              });
+                            } else if (inputTrimmed === '') {
+                              filtered.push({
+                                id: '__open_box__',
+                                name: '+ Add new topic...',
+                                isSystem: false,
+                                problemCount: 0,
+                              });
+                            }
+
+                            return filtered;
+                          }}
+                          renderOption={(props, option) => {
+                            const isString = typeof option === 'string';
+                            const isAddNew = isString
+                              ? (option as string).startsWith('Add "') || option === '+ Add new topic...'
+                              : (option as any).id?.startsWith('__new__:') || (option as any).id === '__open_box__';
+                            const { key, ...otherProps } = props as any;
+                            const label = isString ? (option as string) : (option as any).name;
+                            const isOpenBox = !isString && (option as any).id === '__open_box__';
+
+                            if (isAddNew) {
+                              return (
+                                <li
+                                  key={key}
+                                  {...otherProps}
+                                  style={{
+                                    color: '#4F3FF0',
+                                    fontWeight: 600,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 6,
+                                    cursor: 'pointer',
+                                    borderTop: isOpenBox ? '1px solid #E2E8F0' : 'none',
+                                    marginTop: isOpenBox ? 4 : 0,
+                                    paddingTop: isOpenBox ? 8 : undefined,
+                                  }}
+                                >
+                                  <AddIcon sx={{ fontSize: 18 }} />
+                                  {label}
+                                </li>
+                              );
+                            }
+
+                            return (
+                              <li key={key} {...otherProps}>
+                                {label}
+                              </li>
+                            );
+                          }}
+                          renderInput={(params) => {
+                            const slotInput = (params as any).slotProps?.input;
+                            return (
+                              <TextField
+                                {...params}
+                                size="small"
+                                placeholder={isTopicsLoading ? 'Loading topics…' : 'Select or type a topic'}
+                                slotProps={{
+                                  input: {
+                                    ...slotInput,
+                                    endAdornment: (
+                                      <>
+                                        {isTopicsLoading || isCreatingTopic ? (
+                                          <CircularProgress color="inherit" size={16} sx={{ mr: 1 }} />
+                                        ) : null}
+                                        {slotInput?.endAdornment}
+                                      </>
+                                    ),
+                                  },
+                                }}
+                              />
+                            );
+                          }}
+                        />
+                      )}
+
+                      {/* Topic not in list box / button */}
+                      <Box sx={{ mt: 0.75 }}>
+                        {!showNewTopicBox ? (
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
+                            <Typography
+                              variant="caption"
+                              sx={{ fontSize: '0.72rem', color: '#64748B' }}
+                            >
+                              Type any topic name to search or add to your list
+                            </Typography>
+                            <Button
+                              variant="text"
+                              size="small"
+                              startIcon={<AddIcon sx={{ fontSize: 15 }} />}
+                              onClick={() => {
+                                setShowNewTopicBox(true);
+                                setTopicCreateError('');
+                              }}
+                              sx={{
+                                color: '#4F3FF0',
+                                fontSize: '0.75rem',
+                                p: 0,
+                                textTransform: 'none',
+                                fontWeight: 600,
+                                '&:hover': { bgcolor: 'transparent', textDecoration: 'underline' },
+                              }}
+                            >
+                              Add custom topic
+                            </Button>
+                          </Box>
+                        ) : (
+                          <Paper
+                            elevation={0}
+                            sx={{
+                              p: 1.5,
+                              borderRadius: 2,
+                              border: '1px solid #E2E8F0',
+                              bgcolor: '#F8FAFC',
+                              mt: 0.5,
                             }}
                           >
-                            {isTopicsLoading ? (
-                              <MenuItem disabled>
-                                <CircularProgress size={16} sx={{ mr: 1 }} /> Loading…
-                              </MenuItem>
-                            ) : topics.length === 0 ? (
-                              <MenuItem disabled sx={{ color: '#94A3B8', fontStyle: 'italic', fontSize: '0.85rem' }}>
-                                No topics found — contact support.
-                              </MenuItem>
-                            ) : (
-                              topics.map((t) => (
-                                <MenuItem key={t.id} value={t.id}>
-                                  {t.name}
-                                </MenuItem>
-                              ))
+                            <Typography
+                              variant="caption"
+                              sx={{ fontWeight: 600, color: '#334155', display: 'block', mb: 0.75 }}
+                            >
+                              Type New Topic Name
+                            </Typography>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                              <TextField
+                                size="small"
+                                fullWidth
+                                autoFocus
+                                placeholder="e.g. Trie, Segment Tree"
+                                value={newTopicInput}
+                                onChange={(e) => {
+                                  setNewTopicInput(e.target.value);
+                                  if (topicCreateError) setTopicCreateError('');
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleAddNewTopicFromBox();
+                                  }
+                                }}
+                                disabled={isCreatingTopic}
+                                sx={{ bgcolor: '#FFFFFF', borderRadius: 1 }}
+                              />
+                              <Button
+                                variant="contained"
+                                size="small"
+                                onClick={handleAddNewTopicFromBox}
+                                disabled={!newTopicInput.trim() || isCreatingTopic}
+                                sx={{ px: 2, whiteSpace: 'nowrap', fontWeight: 600 }}
+                              >
+                                {isCreatingTopic ? <CircularProgress size={16} color="inherit" /> : 'Add'}
+                              </Button>
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                onClick={() => {
+                                  setShowNewTopicBox(false);
+                                  setNewTopicInput('');
+                                  setTopicCreateError('');
+                                }}
+                                disabled={isCreatingTopic}
+                                sx={{ minWidth: 'auto', px: 1.5 }}
+                              >
+                                Cancel
+                              </Button>
+                            </Box>
+                            {topicCreateError && (
+                              <Typography variant="caption" sx={{ color: '#DC2626', mt: 0.5, display: 'block' }}>
+                                {topicCreateError}
+                              </Typography>
                             )}
-                          </Select>
-                        </FormControl>
-                      )}
+                          </Paper>
+                        )}
+
+                        {topicSuccessMessage && (
+                          <Typography
+                            variant="caption"
+                            sx={{ color: '#0E9F6E', fontWeight: 600, display: 'block', mt: 0.5 }}
+                          >
+                            ✓ {topicSuccessMessage}
+                          </Typography>
+                        )}
+                      </Box>
                     </Grid>
                   </Grid>
 

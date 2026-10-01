@@ -42,6 +42,20 @@ public class TopicService {
     public TopicResponse createTopic(TopicRequest request, UUID userId) {
         User user = userRepository.findById(userId).orElseThrow();
         String name = request.getName() != null ? request.getName().trim() : "";
+
+        // If topic already exists for this user (system or custom), return existing
+        List<Topic> available = topicRepository.findAllAvailableForUser(userId);
+        for (Topic t : available) {
+            if (t.getName().equalsIgnoreCase(name)) {
+                return TopicResponse.builder()
+                        .id(t.getId())
+                        .name(t.getName())
+                        .isSystem(t.isSystem())
+                        .problemCount(0)
+                        .build();
+            }
+        }
+
         Topic topic = Topic.builder()
                 .name(name)
                 .user(user)
