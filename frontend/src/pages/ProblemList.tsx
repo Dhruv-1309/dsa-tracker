@@ -4,6 +4,7 @@ import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-d
 import { useApiClient } from '../api/useApiClient';
 import type { Problem } from '../types/problem';
 import { sanitizeUrl } from '../utils/security';
+import { formatDate } from '../utils/dateUtils';
 import {
   Container,
   Typography,
@@ -788,11 +789,7 @@ const filterControlSx = {
                         color: COLOR_TOKENS.slate,
                       }}
                     >
-                      {new Date(p.lastSuccessfulAt || p.createdAt).toLocaleDateString(undefined, {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
+                      {formatDate(p.lastSuccessfulAt || p.createdAt)}
                     </Typography>
                   </TableCell>
 

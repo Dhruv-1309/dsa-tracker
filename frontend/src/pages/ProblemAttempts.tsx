@@ -5,6 +5,7 @@ import { useApiClient } from '../api/useApiClient';
 import type { Problem } from '../types/problem';
 import type { Attempt, AttemptRequest } from '../types/attempt';
 import { sanitizeUrl } from '../utils/security';
+import { formatDate } from '../utils/dateUtils';
 import {
   Container,
   Typography,
@@ -427,7 +428,7 @@ export default function ProblemAttempts() {
             </Typography>
             <Typography variant="caption" color="text.secondary">
               {isFriendView
-                ? (attempts.length > 0 ? `Latest: ${new Date(attempts[0].attemptedAt).toLocaleDateString()}` : 'No attempts logged')
+                ? (attempts.length > 0 ? `Latest: ${formatDate(attempts[0].attemptedAt)}` : 'No attempts logged')
                 : `Last thought: ${relativeTime(problem.lastSuccessfulAt)}`}
             </Typography>
           </Paper>
@@ -512,7 +513,7 @@ export default function ProblemAttempts() {
             </Typography>
             <Typography variant="caption" color="text.secondary">
               {isFriendView
-                ? (problem.createdAt ? `Logged on ${new Date(problem.createdAt).toLocaleDateString()}` : 'Friend problem')
+                ? (problem.createdAt ? `Logged on ${formatDate(problem.createdAt)}` : 'Friend problem')
                 : (problem.nextRevisitDate ? 'Retention review scheduled' : 'Pick a date in the sidebar')}
             </Typography>
           </Paper>
@@ -867,7 +868,7 @@ export default function ProblemAttempts() {
                           />
                         </Stack>
                         <Typography variant="caption" color="text.secondary">
-                          Attempt #{attempts.length - idx} • {new Date(a.attemptedAt).toLocaleDateString()} •{' '}
+                          Attempt #{attempts.length - idx} • {formatDate(a.attemptedAt)} •{' '}
                           {a.timeTakenMin || 30} mins • {a.language || 'Python'}
                         </Typography>
                       </div>

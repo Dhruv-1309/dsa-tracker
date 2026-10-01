@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useApiClient } from '../api/useApiClient';
 import type { HeatmapEntry } from '../types/stats';
+import { formatDate } from '../utils/dateUtils';
 import {
   Paper,
   Typography,
@@ -319,12 +320,7 @@ export default function Heatmap({ data, readOnly }: HeatmapProps = {}) {
                             );
                           }
 
-                          const friendlyDate = cell.date.toLocaleDateString(undefined, {
-                            weekday: 'short',
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          });
+                          const friendlyDate = formatDate(cell.date);
 
                           return (
                             <Tooltip

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link as RouterLink } from 'react-router-dom';
 import { useApiClient } from '../api/useApiClient';
 import type { Friend, FriendCodeResponse, FriendRequest } from '../types/friend';
+import { formatDate } from '../utils/dateUtils';
 import {
   Container,
   Typography,
@@ -493,11 +494,7 @@ export default function Friends() {
                       {req.requesterName}
                     </TableCell>
                     <TableCell sx={{ color: '#64748B', fontSize: '0.85rem' }}>
-                      {new Date(req.createdAt).toLocaleDateString(undefined, {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
+                      {formatDate(req.createdAt)}
                     </TableCell>
                     <TableCell align="right">
                       <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
@@ -596,11 +593,7 @@ export default function Friends() {
                       {friend.displayName}
                     </TableCell>
                     <TableCell sx={{ color: '#64748B', fontSize: '0.85rem' }}>
-                      {new Date(friend.respondedAt).toLocaleDateString(undefined, {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
+                      {formatDate(friend.respondedAt)}
                     </TableCell>
                     <TableCell align="right">
                       <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
