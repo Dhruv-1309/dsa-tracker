@@ -28,6 +28,8 @@ export interface FriendSummaryProblem {
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
   primaryTopicName: string;
   currentStatus: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface FriendSummaryResponse {

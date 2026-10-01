@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -20,4 +21,6 @@ public class FriendSummaryProblemDto {
     private Difficulty difficulty;
     private String primaryTopicName;
     private String currentStatus;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

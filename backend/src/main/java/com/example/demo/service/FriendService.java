@@ -269,6 +269,8 @@ public class FriendService {
                         .primaryTopicName(p.getPrimaryTopic() != null ? p.getPrimaryTopic().getName() : "General")
                         .url(p.getUrl())
                         .currentStatus(p.getCurrentStatus())
+                        .createdAt(p.getCreatedAt())
+                        .updatedAt(p.getUpdatedAt())
                         .build())
                 .collect(Collectors.toList());
 

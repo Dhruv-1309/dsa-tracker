@@ -108,8 +108,8 @@ export default function FriendSummaryView() {
     primaryTopicName: p.primaryTopicName || 'General',
     extraTopicNames: [],
     currentStatus: p.currentStatus || 'Solved',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: p.createdAt || new Date().toISOString(),
+    updatedAt: p.updatedAt || new Date().toISOString(),
   }));
 
   return (
