@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useApiClient } from '../api/useApiClient';
 import type { HeatmapEntry } from '../types/stats';
-import { formatDate } from '../utils/dateUtils';
+import { formatDate as formatFriendlyDate } from '../utils/dateUtils';
 import {
   Paper,
   Typography,
@@ -320,7 +320,7 @@ export default function Heatmap({ data, readOnly }: HeatmapProps = {}) {
                             );
                           }
 
-                          const friendlyDate = formatDate(cell.date);
+                          const friendlyDate = formatFriendlyDate(cell.date);
 
                           return (
                             <Tooltip

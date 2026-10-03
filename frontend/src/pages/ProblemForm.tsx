@@ -33,7 +33,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import SparklesIcon from '@mui/icons-material/AutoAwesome';
 import TimerOutlinedIcon from '@mui/icons-material/TimerOutlined';
 import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined';
-import AddIcon from '@mui/icons-material/Add';
+
 
 const DEFAULT_PLATFORMS = [
   'LeetCode',
