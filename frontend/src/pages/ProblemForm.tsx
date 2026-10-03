@@ -189,23 +189,36 @@ export default function ProblemForm() {
 
   // Topic options and save handler (mirrors Platform pattern)
   const topicOptions = useMemo(() => {
-    return topics.map((t) => t.name);
+    // Exclude "Other" from the dropdown options as requested
+    return topics.map((t) => t.name).filter(name => name.toLowerCase() !== 'other');
   }, [topics]);
+
+  // Helper for matching topics (case-insensitive + basic plural/singular like Array/Arrays)
+  const matchTopic = (input: string, topicList: Topic[]) => {
+    const lowerTrimmed = input.trim().toLowerCase();
+    return topicList.find((t) => {
+      const tLower = t.name.toLowerCase();
+      return (
+        tLower === lowerTrimmed ||
+        tLower === lowerTrimmed + 's' ||
+        tLower + 's' === lowerTrimmed
+      );
+    });
+  };
 
   const handleSaveTopic = async (val: string): Promise<Topic | null> => {
     const trimmed = val.trim();
     if (!trimmed) return null;
-    setPrimaryTopic(trimmed);
 
-    // Check if topic exists in currently loaded list (case-insensitive)
-    const existing = topics.find(
-      (t) => t.name.toLowerCase() === trimmed.toLowerCase()
-    );
+    // Check if topic exists in currently loaded list (fuzzy match)
+    const existing = matchTopic(trimmed, topics);
     if (existing) {
       setPrimaryTopic(existing.name);
       setPrimaryTopicId(existing.id);
       return existing;
     }
+
+    setPrimaryTopic(trimmed);
 
     try {
       const res = await fetchApi('/topics', {
@@ -289,9 +302,7 @@ export default function ProblemForm() {
 
     let finalTopicId = primaryTopicId;
     if (!finalTopicId) {
-      const matched = topics.find(
-        (t) => t.name.toLowerCase() === primaryTopic.trim().toLowerCase()
-      );
+      const matched = matchTopic(primaryTopic, topics);
       if (matched) {
         finalTopicId = matched.id;
       } else if (primaryTopic.trim()) {
@@ -310,7 +321,7 @@ export default function ProblemForm() {
     if (extraTopicsText.trim()) {
       const names = extraTopicsText.split(',').map((n) => n.trim()).filter(Boolean);
       for (const name of names) {
-        const matched = topics.find((t) => t.name.toLowerCase() === name.toLowerCase());
+        const matched = matchTopic(name, topics);
         if (matched) {
           extraTopicIds.push(matched.id);
         } else {
@@ -535,63 +546,24 @@ export default function ProblemForm() {
                         options={platformOptions}
                         value={platform}
                         onChange={(_e, newValue) => {
-                          if (!newValue) return;
-                          if (typeof newValue === 'string') {
-                            const match = newValue.match(/^Add "(.+)"$/);
-                            const val = match ? match[1] : newValue;
-                            handleSavePlatform(val);
+                          if (!newValue) {
+                            setPlatform('');
+                            return;
                           }
+                          handleSavePlatform(newValue);
                         }}
                         onInputChange={(_e, newInputValue, reason) => {
-                          if (reason === 'input') {
+                          if (reason === 'input' || reason === 'clear') {
                             setPlatform(newInputValue);
                           }
                         }}
                         filterOptions={(options, params) => {
                           const inputTrimmed = params.inputValue.trim();
                           const inputKey = normalizePlatformKey(inputTrimmed);
-                          const filtered = options.filter((opt) => {
+                          return options.filter((opt) => {
                             if (inputKey === 'gfg' && normalizePlatformKey(opt) === 'gfg') return true;
                             return opt.toLowerCase().includes(inputTrimmed.toLowerCase());
                           });
-
-                          const exists = options.some(
-                            (opt) => normalizePlatformKey(opt) === inputKey
-                          );
-
-                          if (inputTrimmed !== '' && !exists) {
-                            filtered.push(`Add "${inputTrimmed}"`);
-                          }
-
-                          return filtered;
-                        }}
-                        renderOption={(props, option) => {
-                          const isAddOption = typeof option === 'string' && option.startsWith('Add "');
-                          const { key, ...otherProps } = props as any;
-                          if (isAddOption) {
-                            return (
-                              <li
-                                key={key}
-                                {...otherProps}
-                                style={{
-                                  color: '#4F3FF0',
-                                  fontWeight: 600,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 6,
-                                  cursor: 'pointer',
-                                }}
-                              >
-                                <AddIcon sx={{ fontSize: 18 }} />
-                                {option}
-                              </li>
-                            );
-                          }
-                          return (
-                            <li key={key} {...otherProps}>
-                              {option}
-                            </li>
-                          );
                         }}
                         renderInput={(params) => (
                           <TextField
@@ -659,66 +631,28 @@ export default function ProblemForm() {
                           options={topicOptions}
                           value={primaryTopic}
                           onChange={(_e, newValue) => {
-                            if (!newValue) return;
-                            if (typeof newValue === 'string') {
-                              const match = newValue.match(/^Add "(.+)"$/);
-                              const val = match ? match[1] : newValue;
-                              handleSaveTopic(val);
+                            if (!newValue) {
+                              setPrimaryTopic('');
+                              setPrimaryTopicId('');
+                              return;
                             }
+                            handleSaveTopic(newValue);
                           }}
                           onInputChange={(_e, newInputValue, reason) => {
-                            if (reason === 'input') {
+                            if (reason === 'input' || reason === 'clear') {
                               setPrimaryTopic(newInputValue);
-                              const matched = topics.find(
-                                (t) => t.name.toLowerCase() === newInputValue.trim().toLowerCase()
-                              );
+                              const matched = matchTopic(newInputValue, topics);
                               if (matched) {
                                 setPrimaryTopicId(matched.id);
+                              } else {
+                                setPrimaryTopicId('');
                               }
                             }
                           }}
                           filterOptions={(options, params) => {
                             const inputTrimmed = params.inputValue.trim();
-                            const filtered = options.filter((opt) =>
+                            return options.filter((opt) =>
                               opt.toLowerCase().includes(inputTrimmed.toLowerCase())
-                            );
-
-                            const exists = options.some(
-                              (opt) => opt.toLowerCase() === inputTrimmed.toLowerCase()
-                            );
-
-                            if (inputTrimmed !== '' && !exists) {
-                              filtered.push(`Add "${inputTrimmed}"`);
-                            }
-
-                            return filtered;
-                          }}
-                          renderOption={(props, option) => {
-                            const isAddOption = typeof option === 'string' && option.startsWith('Add "');
-                            const { key, ...otherProps } = props as any;
-                            if (isAddOption) {
-                              return (
-                                <li
-                                  key={key}
-                                  {...otherProps}
-                                  style={{
-                                    color: '#4F3FF0',
-                                    fontWeight: 600,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 6,
-                                    cursor: 'pointer',
-                                  }}
-                                >
-                                  <AddIcon sx={{ fontSize: 18 }} />
-                                  {option}
-                                </li>
-                              );
-                            }
-                            return (
-                              <li key={key} {...otherProps}>
-                                {option}
-                              </li>
                             );
                           }}
                           renderInput={(params) => (
