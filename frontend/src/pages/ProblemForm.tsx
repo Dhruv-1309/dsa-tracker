@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link as RouterLink } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useApiClient } from '../api/useApiClient';
@@ -243,12 +243,14 @@ export default function ProblemForm() {
   };
 
   // Sync default primary topic once topics are loaded if not already set
+  const defaultTopicInitialized = useRef(false);
   useEffect(() => {
-    if (!isEdit && topics.length > 0 && !primaryTopicId) {
+    if (!isEdit && topics.length > 0 && !defaultTopicInitialized.current) {
       setPrimaryTopic(topics[0].name);
       setPrimaryTopicId(topics[0].id);
+      defaultTopicInitialized.current = true;
     }
-  }, [topics, primaryTopicId, isEdit]);
+  }, [topics, isEdit]);
 
   // Fetch problem details if edit mode
   const { isLoading: isProblemLoading } = useQuery({
