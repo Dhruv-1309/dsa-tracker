@@ -243,7 +243,7 @@ export default function Friends() {
       </Box>
 
       {/* Top Section: Your Code & Add a Friend */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, mb: 4 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(auto-fit, minmax(360px, 1fr))' }, gap: 3, mb: 4, width: '100%' }}>
         {/* Your Friend Code Card */}
         <Paper
           elevation={0}

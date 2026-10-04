@@ -488,9 +488,20 @@ export default function ProblemForm() {
       )}
 
       <Box component="form" onSubmit={handleSubmit} noValidate>
-        <Grid container spacing={3}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              md: 'minmax(0, 1fr) minmax(320px, 380px)',
+            },
+            gap: 3,
+            alignItems: 'start',
+            width: '100%',
+          }}
+        >
           {/* Main Left Column: Problem Context & First Attempt */}
-          <Grid size={{ xs: 12, md: 7.5 }}>
+          <Box sx={{ minWidth: 0 }}>
             <Stack spacing={3}>
               {/* Section 1: Problem Context */}
               <Paper elevation={0} sx={{ p: 3.5, borderRadius: 3, border: '1px solid #E3E6EF' }}>
@@ -817,10 +828,10 @@ export default function ProblemForm() {
                 </Paper>
               )}
             </Stack>
-          </Grid>
+          </Box>
 
           {/* Right Column: Complexity & Spaced Revisit */}
-          <Grid size={{ xs: 12, md: 4.5 }}>
+          <Box sx={{ minWidth: 0 }}>
             <Paper
               elevation={0}
               sx={{
@@ -1011,8 +1022,8 @@ export default function ProblemForm() {
                 </Button>
               </Stack>
             </Paper>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </Box>
     </Container>
   );

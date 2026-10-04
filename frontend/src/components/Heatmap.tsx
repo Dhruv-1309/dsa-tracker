@@ -156,13 +156,29 @@ export default function Heatmap({ data, readOnly }: HeatmapProps = {}) {
 
   const monthDataList = useMemo(() => buildMonthData(year, entryMap), [year, entryMap]);
 
-  // Gently scroll to the active month on initial mount if viewing the current year
+  // Fluid responsiveness: Scroll to active month and adapt on container resize via ResizeObserver
   useEffect(() => {
-    if (year === currentYear && activeMonthRef.current && scrollContainerRef.current) {
-      const container = scrollContainerRef.current;
-      const target = activeMonthRef.current;
-      const scrollPos = target.offsetLeft - container.offsetWidth / 2 + target.offsetWidth / 2;
-      container.scrollTo({ left: Math.max(0, scrollPos), behavior: 'smooth' });
+    if (!scrollContainerRef.current) return;
+    const container = scrollContainerRef.current;
+
+    const centerActiveMonth = () => {
+      if (year === currentYear && activeMonthRef.current) {
+        const target = activeMonthRef.current;
+        if (container.scrollWidth > container.clientWidth) {
+          const scrollPos = target.offsetLeft - container.offsetWidth / 2 + target.offsetWidth / 2;
+          container.scrollTo({ left: Math.max(0, scrollPos), behavior: 'smooth' });
+        }
+      }
+    };
+
+    centerActiveMonth();
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const ro = new ResizeObserver(() => {
+        centerActiveMonth();
+      });
+      ro.observe(container);
+      return () => ro.disconnect();
     }
   }, [year, currentYear]);
 
@@ -266,9 +282,11 @@ export default function Heatmap({ data, readOnly }: HeatmapProps = {}) {
           <Box
             sx={{
               display: 'flex',
-              gap: { xs: 2.5, md: 3 }, // Distinct separation between every month
+              gap: { xs: 2.5, md: 'clamp(14px, 1.2vw, 28px)' }, // Responsive fluid gap between months
               alignItems: 'flex-start',
-              width: 'max-content',
+              width: '100%',
+              minWidth: 'max-content',
+              justifyContent: 'space-between',
               py: 0.5,
               px: 0.5,
             }}

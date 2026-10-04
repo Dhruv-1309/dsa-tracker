@@ -46,30 +46,36 @@ export const theme = createTheme({
     h1: {
       fontFamily: '"Space Grotesk", sans-serif',
       fontWeight: 700,
+      fontSize: 'clamp(2rem, 1.6rem + 1.8vw, 3rem)',
       letterSpacing: '-0.02em',
     },
     h2: {
       fontFamily: '"Space Grotesk", sans-serif',
       fontWeight: 700,
+      fontSize: 'clamp(1.75rem, 1.4rem + 1.4vw, 2.5rem)',
       letterSpacing: '-0.02em',
     },
     h3: {
       fontFamily: '"Space Grotesk", sans-serif',
       fontWeight: 700,
+      fontSize: 'clamp(1.5rem, 1.25rem + 1vw, 2rem)',
       letterSpacing: '-0.01em',
     },
     h4: {
       fontFamily: '"Space Grotesk", sans-serif',
       fontWeight: 700,
+      fontSize: 'clamp(1.5rem, 1.2rem + 0.9vw, 2.125rem)',
       letterSpacing: '-0.01em',
     },
     h5: {
       fontFamily: '"Space Grotesk", sans-serif',
       fontWeight: 600,
+      fontSize: 'clamp(1.15rem, 1rem + 0.5vw, 1.4rem)',
     },
     h6: {
       fontFamily: '"Space Grotesk", sans-serif',
       fontWeight: 600,
+      fontSize: 'clamp(1rem, 0.92rem + 0.35vw, 1.2rem)',
     },
     subtitle1: {
       fontSize: '1rem',
@@ -92,6 +98,22 @@ export const theme = createTheme({
     borderRadius: 12,
   },
   components: {
+    MuiContainer: {
+      styleOverrides: {
+        root: {
+          width: '100%',
+          boxSizing: 'border-box',
+          paddingLeft: 'clamp(16px, 2.5vw, 40px) !important',
+          paddingRight: 'clamp(16px, 2.5vw, 40px) !important',
+        },
+        maxWidthLg: {
+          maxWidth: 'min(100%, 1560px) !important',
+        },
+        maxWidthMd: {
+          maxWidth: 'min(100%, 1080px) !important',
+        },
+      },
+    },
     MuiCssBaseline: {
       styleOverrides: {
         body: {

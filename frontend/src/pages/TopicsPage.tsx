@@ -7,7 +7,6 @@ import {
   Typography,
   Box,
   Button,
-  Grid,
   Paper,
   LinearProgress,
   CircularProgress,
@@ -99,11 +98,17 @@ export default function TopicsPage() {
           </Button>
         </Paper>
       ) : (
-        <Grid container spacing={3}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: 3,
+            width: '100%',
+          }}
+        >
           {topics.map((t) => {
             const pct = t.totalProblems > 0 ? Math.round((t.solvedProblems / t.totalProblems) * 100) : 0;
             return (
-              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={t.topicId}>
                 <Paper
                   elevation={0}
                   onClick={() => navigate(`/problems?topic=${encodeURIComponent(t.topicName)}`)}
@@ -210,10 +215,9 @@ export default function TopicsPage() {
                     </Box>
                   </div>
                 </Paper>
-              </Grid>
             );
           })}
-        </Grid>
+        </Box>
       )}
     </Container>
   );

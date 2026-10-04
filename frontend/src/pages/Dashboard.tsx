@@ -13,7 +13,6 @@ import {
   Typography,
   Box,
   Button,
-  Grid,
   Paper,
   CircularProgress,
   Stack,
@@ -174,166 +173,176 @@ export default function Dashboard() {
         <Stack spacing={3}>
           {/* Key Metric Cards with Motion Primitive AnimatedNumber */}
           <InView delay={0.1}>
-            <Grid container spacing={2.5}>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: {
+                  xs: '1fr',
+                  sm: 'repeat(auto-fit, minmax(260px, 1fr))',
+                },
+                gap: 2.5,
+                width: '100%',
+              }}
+            >
               {/* Total Problems */}
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <Paper
-                  elevation={0}
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 3,
+                  borderRadius: 2,
+                  border: '1px solid #E3E6EF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2.5,
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    boxShadow: '0 6px 20px rgba(0,0,0,0.04)',
+                    borderColor: '#4F3FF0',
+                  },
+                }}
+              >
+                <Box
                   sx={{
-                    p: 3,
-                    borderRadius: 2,
-                    border: '1px solid #E3E6EF',
+                    width: 50,
+                    height: 50,
+                    borderRadius: 1.5,
+                    backgroundColor: '#EEEBFF',
+                    color: '#4F3FF0',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 2.5,
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      boxShadow: '0 6px 20px rgba(0,0,0,0.04)',
-                      borderColor: '#4F3FF0',
-                    },
+                    justifyContent: 'center',
+                    flexShrink: 0,
                   }}
                 >
-                  <Box
+                  <AssignmentIcon sx={{ fontSize: 26 }} />
+                </Box>
+                <div>
+                  <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>
+                    Tracked problems
+                  </Typography>
+                  <Typography
+                    variant="h4"
+                    component="div"
                     sx={{
-                      width: 50,
-                      height: 50,
-                      borderRadius: 1.5,
-                      backgroundColor: '#EEEBFF',
-                      color: '#4F3FF0',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      fontFamily: '"IBM Plex Mono", monospace',
+                      fontWeight: 700,
+                      color: '#171A2B',
+                      fontSize: 'clamp(1.75rem, 1.35rem + 1vw, 2.5rem)',
+                      lineHeight: 1.1,
+                      mt: 0.5,
                     }}
                   >
-                    <AssignmentIcon sx={{ fontSize: 26 }} />
-                  </Box>
-                  <div>
-                    <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>
-                      Tracked problems
-                    </Typography>
-                    <Typography
-                      variant="h4"
-                      component="div"
-                      sx={{
-                        fontFamily: '"IBM Plex Mono", monospace',
-                        fontWeight: 700,
-                        color: '#171A2B',
-                        lineHeight: 1.1,
-                        mt: 0.5,
-                      }}
-                    >
-                      <AnimatedNumber value={total} />
-                    </Typography>
-                  </div>
-                </Paper>
-              </Grid>
+                    <AnimatedNumber value={total} />
+                  </Typography>
+                </div>
+              </Paper>
 
               {/* Total Solved */}
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <Paper
-                  elevation={0}
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 3,
+                  borderRadius: 2,
+                  border: '1px solid #E3E6EF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2.5,
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    boxShadow: '0 6px 20px rgba(0,0,0,0.04)',
+                    borderColor: '#0E9F6E',
+                  },
+                }}
+              >
+                <Box
                   sx={{
-                    p: 3,
-                    borderRadius: 2,
-                    border: '1px solid #E3E6EF',
+                    width: 50,
+                    height: 50,
+                    borderRadius: 1.5,
+                    backgroundColor: '#DEF7EC',
+                    color: '#0E9F6E',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 2.5,
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      boxShadow: '0 6px 20px rgba(0,0,0,0.04)',
-                      borderColor: '#0E9F6E',
-                    },
+                    justifyContent: 'center',
+                    flexShrink: 0,
                   }}
                 >
-                  <Box
+                  <CheckCircleIcon sx={{ fontSize: 26 }} />
+                </Box>
+                <div>
+                  <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>
+                    Solved optimally
+                  </Typography>
+                  <Typography
+                    variant="h4"
+                    component="div"
                     sx={{
-                      width: 50,
-                      height: 50,
-                      borderRadius: 1.5,
-                      backgroundColor: '#DEF7EC',
+                      fontFamily: '"IBM Plex Mono", monospace',
+                      fontWeight: 700,
                       color: '#0E9F6E',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      fontSize: 'clamp(1.75rem, 1.35rem + 1vw, 2.5rem)',
+                      lineHeight: 1.1,
+                      mt: 0.5,
                     }}
                   >
-                    <CheckCircleIcon sx={{ fontSize: 26 }} />
-                  </Box>
-                  <div>
-                    <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>
-                      Solved optimally
-                    </Typography>
-                    <Typography
-                      variant="h4"
-                      component="div"
-                      sx={{
-                        fontFamily: '"IBM Plex Mono", monospace',
-                        fontWeight: 700,
-                        color: '#0E9F6E',
-                        lineHeight: 1.1,
-                        mt: 0.5,
-                      }}
-                    >
-                      <AnimatedNumber value={solvedCount} />
-                    </Typography>
-                  </div>
-                </Paper>
-              </Grid>
+                    <AnimatedNumber value={solvedCount} />
+                  </Typography>
+                </div>
+              </Paper>
 
               {/* Overdue / Due */}
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <Paper
-                  elevation={0}
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 3,
+                  borderRadius: 2,
+                  border: '1px solid #E3E6EF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2.5,
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    boxShadow: '0 6px 20px rgba(0,0,0,0.04)',
+                    borderColor: overdue.length > 0 ? '#DC2626' : '#D97706',
+                  },
+                }}
+              >
+                <Box
                   sx={{
-                    p: 3,
-                    borderRadius: 2,
-                    border: '1px solid #E3E6EF',
+                    width: 50,
+                    height: 50,
+                    borderRadius: 1.5,
+                    backgroundColor: overdue.length > 0 ? '#FDECEC' : '#FEF3C7',
+                    color: overdue.length > 0 ? '#DC2626' : '#D97706',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 2.5,
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      boxShadow: '0 6px 20px rgba(0,0,0,0.04)',
-                      borderColor: overdue.length > 0 ? '#DC2626' : '#D97706',
-                    },
+                    justifyContent: 'center',
+                    flexShrink: 0,
                   }}
                 >
-                  <Box
+                  <WarningAmberIcon sx={{ fontSize: 26 }} />
+                </Box>
+                <div>
+                  <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>
+                    Revisit needed
+                  </Typography>
+                  <Typography
+                    variant="h4"
+                    component="div"
                     sx={{
-                      width: 50,
-                      height: 50,
-                      borderRadius: 1.5,
-                      backgroundColor: overdue.length > 0 ? '#FDECEC' : '#FEF3C7',
+                      fontFamily: '"IBM Plex Mono", monospace',
+                      fontWeight: 700,
                       color: overdue.length > 0 ? '#DC2626' : '#D97706',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      fontSize: 'clamp(1.75rem, 1.35rem + 1vw, 2.5rem)',
+                      lineHeight: 1.1,
+                      mt: 0.5,
                     }}
                   >
-                    <WarningAmberIcon sx={{ fontSize: 26 }} />
-                  </Box>
-                  <div>
-                    <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>
-                      Revisit needed
-                    </Typography>
-                    <Typography
-                      variant="h4"
-                      component="div"
-                      sx={{
-                        fontFamily: '"IBM Plex Mono", monospace',
-                        fontWeight: 700,
-                        color: overdue.length > 0 ? '#DC2626' : '#D97706',
-                        lineHeight: 1.1,
-                        mt: 0.5,
-                      }}
-                    >
-                      <AnimatedNumber value={overdue.length + due.length} />
-                    </Typography>
-                  </div>
-                </Paper>
-              </Grid>
-            </Grid>
+                    <AnimatedNumber value={overdue.length + due.length} />
+                  </Typography>
+                </div>
+              </Paper>
+            </Box>
           </InView>
 
           {/* Progress Breakdown Card */}
@@ -404,9 +413,20 @@ export default function Dashboard() {
 
           {/* Two-Column Detail Grid */}
           <InView delay={0.3}>
-            <Grid container spacing={3} sx={{ alignItems: 'stretch' }}>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: {
+                  xs: '1fr',
+                  md: 'minmax(0, 1.4fr) minmax(320px, 1fr)',
+                },
+                gap: 3,
+                alignItems: 'stretch',
+                width: '100%',
+              }}
+            >
               {/* Revisit Due Widget */}
-              <Grid size={{ xs: 12, md: 7 }} sx={{ display: 'flex', flexDirection: 'column' }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 0, height: '100%' }}>
                 <Paper
                   elevation={0}
                   sx={{
@@ -511,10 +531,10 @@ export default function Dashboard() {
                     </Stack>
                   )}
                 </Paper>
-              </Grid>
+              </Box>
 
               {/* Breakdown by Difficulty & Platform */}
-              <Grid size={{ xs: 12, md: 5 }} sx={{ display: 'flex', flexDirection: 'column' }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 0, height: '100%' }}>
                 <Paper
                   elevation={0}
                   sx={{
@@ -581,8 +601,8 @@ export default function Dashboard() {
                     })}
                   </Stack>
                 </Paper>
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
           </InView>
         </Stack>
       )}

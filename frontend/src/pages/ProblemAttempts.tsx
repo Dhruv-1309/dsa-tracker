@@ -417,113 +417,138 @@ export default function ProblemAttempts() {
       </Paper>
 
       {/* Top 3 Stat Cards */}
-      <Grid container spacing={2.5} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: '1px solid #E3E6EF' }}>
-            <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>
-              Attempt Count
-            </Typography>
-            <Typography variant="h4" sx={{ fontFamily: '"IBM Plex Mono", monospace', fontWeight: 700, mt: 0.5 }}>
-              {attempts.length}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {isFriendView
-                ? (attempts.length > 0 ? `Latest: ${formatDate(attempts[0].attemptedAt)}` : 'No attempts logged')
-                : `Last thought: ${relativeTime(problem.lastSuccessfulAt)}`}
-            </Typography>
-          </Paper>
-        </Grid>
+      {/* Top 3 Stat Cards */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: 'repeat(auto-fit, minmax(240px, 1fr))',
+          },
+          gap: 2.5,
+          mb: 3,
+          width: '100%',
+        }}
+      >
+        <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: '1px solid #E3E6EF' }}>
+          <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>
+            Attempt Count
+          </Typography>
+          <Typography
+            variant="h4"
+            sx={{
+              fontFamily: '"IBM Plex Mono", monospace',
+              fontWeight: 700,
+              fontSize: 'clamp(1.75rem, 1.35rem + 1vw, 2.5rem)',
+              mt: 0.5,
+            }}
+          >
+            {attempts.length}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {isFriendView
+              ? (attempts.length > 0 ? `Latest: ${formatDate(attempts[0].attemptedAt)}` : 'No attempts logged')
+              : `Last thought: ${relativeTime(problem.lastSuccessfulAt)}`}
+          </Typography>
+        </Paper>
 
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: '1px solid #E3E6EF' }}>
-            <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>
-              Target Complexity
-            </Typography>
-            {(!isFriendView && blindMode) ? (
-              <>
+        <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: '1px solid #E3E6EF' }}>
+          <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>
+            Target Complexity
+          </Typography>
+          {(!isFriendView && blindMode) ? (
+            <>
+              <Typography
+                variant="h5"
+                sx={{
+                  fontFamily: '"IBM Plex Mono", monospace',
+                  fontWeight: 700,
+                  color: '#94A3B8',
+                  fontStyle: 'italic',
+                  mt: 0.5,
+                }}
+              >
+                Hidden in Blind Mode
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Toggle blind mode to view
+              </Typography>
+            </>
+          ) : (
+            <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2.5, mt: 0.5 }}>
+              <Box>
                 <Typography
                   variant="h5"
                   sx={{
                     fontFamily: '"IBM Plex Mono", monospace',
                     fontWeight: 700,
-                    color: '#94A3B8',
-                    fontStyle: 'italic',
-                    mt: 0.5,
+                    color: '#171A2B',
                   }}
                 >
-                  Hidden in Blind Mode
+                  {problem.optimalTime || 'O(n)'}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Toggle blind mode to view
+                  Time
                 </Typography>
-              </>
-            ) : (
-              <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2.5, mt: 0.5 }}>
-                <Box>
-                  <Typography
-                    variant="h5"
-                    sx={{
-                      fontFamily: '"IBM Plex Mono", monospace',
-                      fontWeight: 700,
-                      color: '#171A2B',
-                    }}
-                  >
-                    {problem.optimalTime || 'O(n)'}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Time
-                  </Typography>
-                </Box>
-                <Box sx={{ width: '1px', height: 28, backgroundColor: '#E2E8F0', alignSelf: 'center' }} />
-                <Box>
-                  <Typography
-                    variant="h5"
-                    sx={{
-                      fontFamily: '"IBM Plex Mono", monospace',
-                      fontWeight: 700,
-                      color: '#171A2B',
-                    }}
-                  >
-                    {problem.optimalSpace || 'O(1)'}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Space
-                  </Typography>
-                </Box>
               </Box>
-            )}
-          </Paper>
-        </Grid>
+              <Box sx={{ width: '1px', height: 28, backgroundColor: '#E2E8F0', alignSelf: 'center' }} />
+              <Box>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontFamily: '"IBM Plex Mono", monospace',
+                    fontWeight: 700,
+                    color: '#171A2B',
+                  }}
+                >
+                  {problem.optimalSpace || 'O(1)'}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Space
+                </Typography>
+              </Box>
+            </Box>
+          )}
+        </Paper>
 
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: '1px solid #E3E6EF' }}>
-            <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>
-              {isFriendView ? 'Problem Status' : 'Next Revisit'}
-            </Typography>
-            <Typography
-              variant="h5"
-              sx={{
-                fontFamily: '"IBM Plex Mono", monospace',
-                fontWeight: 700,
-                color: isFriendView ? '#171A2B' : (problem.nextRevisitDate ? '#4F3FF0' : '#94A3B8'),
-                mt: 0.5,
-              }}
-            >
-              {isFriendView ? (problem.currentStatus || 'Logged') : (problem.nextRevisitDate || 'Unscheduled')}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {isFriendView
-                ? (problem.createdAt ? `Logged on ${formatDate(problem.createdAt)}` : 'Friend problem')
-                : (problem.nextRevisitDate ? 'Retention review scheduled' : 'Pick a date in the sidebar')}
-            </Typography>
-          </Paper>
-        </Grid>
-      </Grid>
+        <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: '1px solid #E3E6EF' }}>
+          <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>
+            {isFriendView ? 'Problem Status' : 'Next Revisit'}
+          </Typography>
+          <Typography
+            variant="h5"
+            sx={{
+              fontFamily: '"IBM Plex Mono", monospace',
+              fontWeight: 700,
+              color: isFriendView ? '#171A2B' : (problem.nextRevisitDate ? '#4F3FF0' : '#94A3B8'),
+              mt: 0.5,
+            }}
+          >
+            {isFriendView ? (problem.currentStatus || 'Logged') : (problem.nextRevisitDate || 'Unscheduled')}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {isFriendView
+              ? (problem.createdAt ? `Logged on ${formatDate(problem.createdAt)}` : 'Friend problem')
+              : (problem.nextRevisitDate ? 'Retention review scheduled' : 'Pick a date in the sidebar')}
+          </Typography>
+        </Paper>
+      </Box>
 
       {/* Main Two-Column Layout */}
-      <Grid container spacing={3}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            md: 'minmax(0, 1fr) minmax(320px, 380px)',
+          },
+          gap: 3,
+          alignItems: 'start',
+          width: '100%',
+        }}
+      >
         {/* Left Column: Attempt Timeline & Form */}
-        <Grid size={{ xs: 12, md: 7.5 }}>
+        <Box sx={{ minWidth: 0 }}>
           <Stack spacing={3}>
             {/* Inline New Attempt Form */}
             <Collapse in={showNewAttemptForm}>
@@ -1035,10 +1060,10 @@ export default function ProblemAttempts() {
               </Stack>
             )}
           </Stack>
-        </Grid>
+        </Box>
 
         {/* Right Column: Revisit & Settings Sidebar */}
-        <Grid size={{ xs: 12, md: 4.5 }}>
+        <Box sx={{ minWidth: 0 }}>
           <Stack spacing={3} sx={{ position: { md: 'sticky' }, top: 84 }}>
             {!isFriendView ? (
               <>
@@ -1195,8 +1220,8 @@ export default function ProblemAttempts() {
               </Typography>
             </Paper>
           </Stack>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     </Container>
   );
 }
