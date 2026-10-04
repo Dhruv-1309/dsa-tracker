@@ -54,7 +54,7 @@ public class GlobalExceptionHandler {
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", Instant.now().toString());
         body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("error", "Invalid request parameter or syntax");
+        body.put("error", "Please check your input details and try again.");
         body.put("correlationId", correlationId);
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
@@ -65,7 +65,7 @@ public class GlobalExceptionHandler {
         String message = ex.getBindingResult().getFieldErrors().stream()
                 .map(err -> err.getField() + ": " + err.getDefaultMessage())
                 .findFirst()
-                .orElse("Validation failed for request parameters");
+                .orElse("Please check your input and try again.");
 
         log.warn("[CorrelationId: {}] Validation failed: {}", correlationId, message);
 
@@ -83,7 +83,7 @@ public class GlobalExceptionHandler {
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", Instant.now().toString());
         body.put("status", HttpStatus.NOT_FOUND.value());
-        body.put("error", "Resource not found");
+        body.put("error", "The requested page or item could not be found.");
         body.put("correlationId", correlationId);
         return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
     }
@@ -96,7 +96,7 @@ public class GlobalExceptionHandler {
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", Instant.now().toString());
         body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("error", "Malformed or unreadable request body");
+        body.put("error", "We could not process the submitted data. Please check your input.");
         body.put("correlationId", correlationId);
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
@@ -107,11 +107,11 @@ public class GlobalExceptionHandler {
         // Server-side logs receive the full exception and stack trace
         log.error("[CorrelationId: {}] Unhandled server exception: {}", correlationId, ex.getMessage(), ex);
 
-        // Client response receives only generic message and correlation ID - zero internal data or stack traces
+        // Client response receives only friendly message - zero internal details or stack traces
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", Instant.now().toString());
         body.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        body.put("error", "An internal error occurred. Please contact support referencing this correlation ID.");
+        body.put("error", "Something went wrong on our end. Please try again in a moment.");
         body.put("correlationId", correlationId);
         return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
     }

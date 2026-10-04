@@ -589,7 +589,7 @@ const filterControlSx = {
         </Box>
       ) : error ? (
         <Alert severity="error" sx={{ borderRadius: RADIUS.control }}>
-          Error loading problems. Please refresh the page.
+          Unable to load your problems right now. Please check your connection and refresh the page.
         </Alert>
       ) : sortedProblems.length === 0 ? (
         <Paper

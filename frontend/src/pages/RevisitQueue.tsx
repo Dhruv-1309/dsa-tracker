@@ -154,7 +154,7 @@ export default function RevisitQueue() {
             </Box>
           ) : error ? (
             <Box sx={{ p: 3 }}>
-              <Alert severity="error">Failed to load revisit queue. Please try again.</Alert>
+              <Alert severity="error">Unable to load the revisit queue right now. Please try again.</Alert>
             </Box>
           ) : problems.length === 0 ? (
             <Box sx={{ py: 8, px: 3, textAlign: 'center' }}>

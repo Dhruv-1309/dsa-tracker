@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button, CircularProgress, Box, Typography } from '@mui/material';
 import { API_BASE_URL, GOOGLE_CLIENT_ID } from '../api/config';
+import { extractApiErrorMessage, getFriendlyErrorMessage } from '../utils/errorUtils';
 
 // TypeScript declarations for Google Identity Services OAuth2
 declare global {
@@ -115,25 +116,12 @@ export default function GoogleSignInButton({
             onError('Authentication succeeded but authorization token was missing.');
           }
         } else {
-          let errorMessage = 'Google authentication failed. Please try again.';
-          try {
-            const data = await res.json();
-            if (data?.error) {
-              errorMessage = data.error;
-            } else if (data?.message) {
-              errorMessage = data.message;
-            }
-          } catch {
-            // Non-JSON response
-          }
-          if (res.status === 404) {
-            errorMessage = 'Auth endpoint not ready (404). Please ensure backend is running.';
-          }
-          onError(errorMessage);
+          const friendlyError = await extractApiErrorMessage(res, 'Google Sign-In is temporarily unavailable. Please try again or use email.');
+          onError(friendlyError);
         }
       } catch (err) {
         console.error('Google OAuth request error:', err);
-        onError('Unable to reach server. Please check your connection.');
+        onError(getFriendlyErrorMessage(err, 'Unable to connect to the server. Please check your internet connection.'));
       } finally {
         setLoading(false);
       }

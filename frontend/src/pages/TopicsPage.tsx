@@ -74,7 +74,7 @@ export default function TopicsPage() {
         </Box>
       ) : error ? (
         <Alert severity="error" sx={{ borderRadius: 2 }}>
-          Failed to load topic progress. Please refresh the page.
+          Unable to load topic progress right now. Please refresh the page.
         </Alert>
       ) : topics.length === 0 ? (
         <Paper

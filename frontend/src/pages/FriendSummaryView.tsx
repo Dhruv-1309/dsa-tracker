@@ -57,6 +57,10 @@ export default function FriendSummaryView() {
     );
   }
 
+  const isPermissionDenied =
+    error instanceof Error &&
+    (error.message.toLowerCase().includes('friend') || error.message.toLowerCase().includes('denied'));
+
   if (error || !summary) {
     return (
       <Container maxWidth="md" sx={{ py: 6 }}>
@@ -65,17 +69,29 @@ export default function FriendSummaryView() {
           sx={{
             p: 4,
             borderRadius: 3,
-            border: '1px solid #F8B4B4',
-            backgroundColor: '#FDECEC',
+            border: isPermissionDenied ? '1px solid #F8B4B4' : '1px solid #E3E6EF',
+            backgroundColor: isPermissionDenied ? '#FDECEC' : '#FFFFFF',
             textAlign: 'center',
           }}
         >
-          <LockOutlinedIcon sx={{ fontSize: 40, color: '#9B1C1C', mb: 1.5 }} />
-          <Typography variant="h6" sx={{ color: '#9B1C1C', fontWeight: 700, mb: 1 }}>
-            {error instanceof Error ? error.message : 'Unable to view friend log'}
+          {isPermissionDenied ? (
+            <LockOutlinedIcon sx={{ fontSize: 40, color: '#9B1C1C', mb: 1.5 }} />
+          ) : (
+            <AccountCircleOutlinedIcon sx={{ fontSize: 40, color: '#64748B', mb: 1.5 }} />
+          )}
+          <Typography
+            variant="h6"
+            sx={{ color: isPermissionDenied ? '#9B1C1C' : '#171A2B', fontWeight: 700, mb: 1 }}
+          >
+            {isPermissionDenied ? 'Friend Access Required' : 'Unable to Load Activity Log'}
           </Typography>
-          <Typography variant="body2" sx={{ color: '#771D1D', mb: 3 }}>
-            You do not have an active, accepted friendship with this user. To view their log, send them a friend request and wait for them to accept.
+          <Typography
+            variant="body2"
+            sx={{ color: isPermissionDenied ? '#771D1D' : '#64748B', mb: 3, maxWidth: 460, mx: 'auto' }}
+          >
+            {isPermissionDenied
+              ? 'You must be connected as accepted friends to view this activity log. Send them a friend request to view their solved problems.'
+              : 'The server could not be reached right now. Please check your internet connection and try again.'}
           </Typography>
           <Button
             component={RouterLink}
@@ -83,8 +99,8 @@ export default function FriendSummaryView() {
             variant="contained"
             startIcon={<ArrowBackIcon />}
             sx={{
-              backgroundColor: '#9B1C1C',
-              '&:hover': { backgroundColor: '#771D1D' },
+              backgroundColor: isPermissionDenied ? '#9B1C1C' : '#4F3FF0',
+              '&:hover': { backgroundColor: isPermissionDenied ? '#771D1D' : '#3D2ED0' },
               borderRadius: 2,
               fontWeight: 600,
             }}

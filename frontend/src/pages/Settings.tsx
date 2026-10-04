@@ -23,6 +23,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '../context/AuthContext';
 import { useApiClient } from '../api/useApiClient';
 import { API_BASE_URL } from '../api/config';
+import { extractApiErrorMessage, getFriendlyErrorMessage } from '../utils/errorUtils';
 
 export default function Settings() {
   const { user, token, setUser, logout } = useAuth();
@@ -102,15 +103,11 @@ export default function Settings() {
         setUser(updated);
         setProfileSuccess('Profile username updated successfully! Friends will see this name.');
       } else {
-        const err = await res.json().catch(() => null);
-        if (res.status === 404) {
-          setProfileError('The backend service is currently deploying updates. Please wait 1-2 minutes and try again.');
-        } else {
-          setProfileError(err?.message || err?.error || 'Failed to update username.');
-        }
+        const friendlyError = await extractApiErrorMessage(res, 'Unable to update username. Please try again.');
+        setProfileError(friendlyError);
       }
-    } catch {
-      setProfileError('Network error. Unable to reach server.');
+    } catch (err) {
+      setProfileError(getFriendlyErrorMessage(err, 'Unable to connect to the server. Please check your connection.'));
     } finally {
       setProfileLoading(false);
     }
@@ -151,13 +148,13 @@ export default function Settings() {
         setNewPassword('');
         setConfirmPassword('');
       } else if (res.status === 401) {
-        setPasswordError('Current password is incorrect');
+        setPasswordError('The current password you entered is incorrect.');
       } else {
-        const errorData = await res.json().catch(() => null);
-        setPasswordError(errorData?.error || errorData?.message || 'Failed to update password. Please try again.');
+        const friendlyError = await extractApiErrorMessage(res, 'Unable to update password. Please check your details.');
+        setPasswordError(friendlyError);
       }
-    } catch {
-      setPasswordError('Network error. Unable to reach server.');
+    } catch (err) {
+      setPasswordError(getFriendlyErrorMessage(err, 'Unable to connect to the server. Please check your connection.'));
     } finally {
       setPasswordLoading(false);
     }

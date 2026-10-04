@@ -4,6 +4,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { useApiClient } from '../api/useApiClient';
 import type { Friend, FriendCodeResponse, FriendRequest } from '../types/friend';
 import { formatDate } from '../utils/dateUtils';
+import { extractApiErrorMessage, getFriendlyErrorMessage } from '../utils/errorUtils';
 import {
   Container,
   Typography,
@@ -99,11 +100,13 @@ export default function Friends() {
   // Mutation: Regenerate code
   const regenerateMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetchApi('/v1/users/me/friend-code/regenerate', { method: 'POST' });
+      let res = await fetchApi('/v1/users/me/friend-code/regenerate', { method: 'POST' });
       if (!res.ok) {
-        const fallback = await fetchApi('/users/me/friend-code/regenerate', { method: 'POST' });
-        if (!fallback.ok) throw new Error('Failed to regenerate friend code');
-        return fallback.json();
+        res = await fetchApi('/users/me/friend-code/regenerate', { method: 'POST' });
+      }
+      if (!res.ok) {
+        const friendlyError = await extractApiErrorMessage(res, 'Unable to generate a new friend code. Please try again.');
+        throw new Error(friendlyError);
       }
       return res.json();
     },
@@ -124,20 +127,18 @@ export default function Friends() {
       });
 
       if (!res.ok) {
-        const errJson = await res.json().catch(() => null);
-        const errorMsg =
-          errJson?.error ||
-          errJson?.message ||
-          (res.status === 404
-            ? 'User not found with provided friend code'
+        const defaultFallback =
+          res.status === 404
+            ? 'No user found with that friend code. Please check the code and try again.'
             : res.status === 400
-            ? 'Cannot send friend request to yourself'
+            ? 'You cannot send a friend request to yourself.'
             : res.status === 409
-            ? 'Friend request already sent or you are already friends'
+            ? "You've already sent a request or are already friends with this user."
             : res.status === 429
-            ? 'Too many friend requests sent. Please try again after 60 seconds.'
-            : 'Failed to send friend request');
-        throw new Error(errorMsg);
+            ? 'You have sent too many requests recently. Please wait a minute and try again.'
+            : 'Unable to send friend request right now. Please try again.';
+        const friendlyMsg = await extractApiErrorMessage(res, defaultFallback);
+        throw new Error(friendlyMsg);
       }
       return res.json();
     },
@@ -151,18 +152,21 @@ export default function Friends() {
       queryClient.invalidateQueries({ queryKey: ['friendRequests'] });
       queryClient.invalidateQueries({ queryKey: ['friendsList'] });
     },
-    onError: (err: Error) => {
-      setAddError(err.message);
+    onError: (err: unknown) => {
+      setAddError(getFriendlyErrorMessage(err, 'Unable to send friend request. Please check your connection.'));
     },
   });
 
   // Mutation: Accept request
   const acceptMutation = useMutation({
     mutationFn: async (requestId: string) => {
-      const res = await fetchApi(`/v1/friends/requests/${requestId}/accept`, { method: 'POST' });
+      let res = await fetchApi(`/v1/friends/requests/${requestId}/accept`, { method: 'POST' });
       if (!res.ok) {
-        const fallback = await fetchApi(`/friends/requests/${requestId}/accept`, { method: 'POST' });
-        if (!fallback.ok) throw new Error('Failed to accept request');
+        res = await fetchApi(`/friends/requests/${requestId}/accept`, { method: 'POST' });
+      }
+      if (!res.ok) {
+        const friendlyMsg = await extractApiErrorMessage(res, 'Unable to accept this friend request. Please try again.');
+        throw new Error(friendlyMsg);
       }
     },
     onSuccess: () => {
@@ -174,10 +178,13 @@ export default function Friends() {
   // Mutation: Decline request
   const declineMutation = useMutation({
     mutationFn: async (requestId: string) => {
-      const res = await fetchApi(`/v1/friends/requests/${requestId}/decline`, { method: 'POST' });
+      let res = await fetchApi(`/v1/friends/requests/${requestId}/decline`, { method: 'POST' });
       if (!res.ok) {
-        const fallback = await fetchApi(`/friends/requests/${requestId}/decline`, { method: 'POST' });
-        if (!fallback.ok) throw new Error('Failed to decline request');
+        res = await fetchApi(`/friends/requests/${requestId}/decline`, { method: 'POST' });
+      }
+      if (!res.ok) {
+        const friendlyMsg = await extractApiErrorMessage(res, 'Unable to decline this friend request. Please try again.');
+        throw new Error(friendlyMsg);
       }
     },
     onSuccess: () => {
@@ -188,10 +195,13 @@ export default function Friends() {
   // Mutation: Remove friend
   const removeMutation = useMutation({
     mutationFn: async (friendUserId: string) => {
-      const res = await fetchApi(`/v1/friends/${friendUserId}`, { method: 'DELETE' });
+      let res = await fetchApi(`/v1/friends/${friendUserId}`, { method: 'DELETE' });
       if (!res.ok) {
-        const fallback = await fetchApi(`/friends/${friendUserId}`, { method: 'DELETE' });
-        if (!fallback.ok) throw new Error('Failed to remove friend');
+        res = await fetchApi(`/friends/${friendUserId}`, { method: 'DELETE' });
+      }
+      if (!res.ok) {
+        const friendlyMsg = await extractApiErrorMessage(res, 'Unable to remove friend. Please try again.');
+        throw new Error(friendlyMsg);
       }
     },
     onSuccess: () => {

@@ -147,27 +147,27 @@ export default function Dashboard() {
       {isError ? (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 12, gap: 2 }}>
           <Typography variant="h6" sx={{ color: '#DC2626', fontWeight: 700 }}>
-            Couldn't reach the server
+            Unable to connect right now
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', maxWidth: 380 }}>
-            The backend may be waking up from sleep (Render free tier). Wait a few seconds and try again.
+            The server took too long to respond. Please wait a moment and try again.
           </Typography>
           <Button
             variant="contained"
             onClick={() => refetch()}
             sx={{ borderRadius: 2.5, fontWeight: 600, mt: 1 }}
           >
-            Retry
+            Try Again
           </Button>
         </Box>
       ) : isLoading ? (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 12 }}>
           <CircularProgress size={40} sx={{ color: '#4F3FF0', mb: 2 }} />
           <Typography variant="body2" color="text.secondary">
-            Gathering practice analytics...
+            Gathering your practice analytics...
           </Typography>
           <Typography variant="caption" color="text.secondary" sx={{ mt: 1, opacity: 0.6 }}>
-            Backend may be waking up — this can take ~30s on first load
+            Loading your latest stats and activity
           </Typography>
         </Box>
       ) : (

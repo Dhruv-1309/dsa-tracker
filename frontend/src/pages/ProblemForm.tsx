@@ -6,6 +6,7 @@ import type { Problem, ProblemRequest } from '../types/problem';
 import type { Topic } from '../types/topic';
 import type { AttemptRequest } from '../types/attempt';
 import type { StatsSummary } from '../types/stats';
+import { extractApiErrorMessage, getFriendlyErrorMessage } from '../utils/errorUtils';
 import {
   Container,
   Typography,
@@ -364,15 +365,8 @@ export default function ProblemForm() {
         });
 
         if (!res.ok) {
-          const errText = await res.text();
-          let msg = '';
-          try {
-            const j = JSON.parse(errText);
-            msg = j.error || j.message;
-          } catch {
-            msg = errText;
-          }
-          throw new Error(msg || 'Failed to update problem.');
+          const friendlyError = await extractApiErrorMessage(res, 'Unable to update problem details. Please try again.');
+          throw new Error(friendlyError);
         }
         queryClient.invalidateQueries({ queryKey: ['problems'] });
         queryClient.invalidateQueries({ queryKey: ['problem', id] });
@@ -396,15 +390,8 @@ export default function ProblemForm() {
         });
 
         if (!res.ok) {
-          const errText = await res.text();
-          let msg = '';
-          try {
-            const j = JSON.parse(errText);
-            msg = j.error || j.message;
-          } catch {
-            msg = errText;
-          }
-          throw new Error(msg || 'Failed to create problem.');
+          const friendlyError = await extractApiErrorMessage(res, 'Unable to save this problem. Please try again.');
+          throw new Error(friendlyError);
         }
 
         const createdProblem: Problem = await res.json();
@@ -446,7 +433,7 @@ export default function ProblemForm() {
         }
       }
     } catch (err: unknown) {
-      setFormError(err instanceof Error ? err.message : 'An unexpected error occurred while saving.');
+      setFormError(getFriendlyErrorMessage(err, 'Could not save problem details. Please check your connection and try again.'));
     } finally {
       setSaving(false);
     }

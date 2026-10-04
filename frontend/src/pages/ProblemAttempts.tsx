@@ -6,6 +6,7 @@ import type { Problem } from '../types/problem';
 import type { Attempt, AttemptRequest } from '../types/attempt';
 import { sanitizeUrl } from '../utils/security';
 import { formatDate } from '../utils/dateUtils';
+import { extractApiErrorMessage, getFriendlyErrorMessage } from '../utils/errorUtils';
 import {
   Container,
   Typography,
@@ -105,9 +106,9 @@ export default function ProblemAttempts() {
         const fallback = await fetchApi(`/friends/${friendUserId}/problems/${effectiveProblemId}`);
         if (!fallback.ok) {
           if (fallback.status === 403 || res.status === 403) {
-            throw new Error('Access denied: You must be accepted friends with this user to view their problem details.');
+            throw new Error('You must be connected as friends to view this problem.');
           }
-          throw new Error('Problem not found');
+          throw new Error('This problem could not be found or may have been removed.');
         }
         return fallback.json();
       }
@@ -170,15 +171,14 @@ export default function ProblemAttempts() {
   // Create attempt mutation
   const attemptMutation = useMutation({
     mutationFn: async (payload: AttemptRequest) => {
-      if (isFriendView) throw new Error('Cannot add attempt in read-only friend mode');
+      if (isFriendView) throw new Error("You are viewing a friend's problem in read-only mode.");
       const res = await fetchApi(`/problems/${effectiveProblemId}/attempts`, {
         method: 'POST',
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
-        const errJson = await res.json().catch(() => null);
-        const errText = !errJson ? await res.text().catch(() => '') : '';
-        throw new Error(errJson?.error || errJson?.message || errText || 'Failed to save attempt');
+        const friendlyError = await extractApiErrorMessage(res, 'Unable to save this attempt. Please try again.');
+        throw new Error(friendlyError);
       }
       return res.json();
     },
@@ -680,7 +680,7 @@ export default function ProblemAttempts() {
 
                     {attemptMutation.isError && (
                       <Alert severity="error" sx={{ borderRadius: 2 }}>
-                        {attemptMutation.error instanceof Error ? attemptMutation.error.message : 'Failed to save attempt. Please verify your inputs.'}
+                        {getFriendlyErrorMessage(attemptMutation.error, 'Unable to save attempt. Please verify your inputs.')}
                       </Alert>
                     )}
 

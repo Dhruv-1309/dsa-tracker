@@ -28,6 +28,8 @@ import { TextEffect } from '../components/motion/TextEffect';
 import GoogleSignInButton from '../components/GoogleSignInButton';
 import { API_BASE_URL } from '../api/config';
 
+import { extractApiErrorMessage, getFriendlyErrorMessage } from '../utils/errorUtils';
+
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -54,11 +56,11 @@ export default function Login() {
         setToken(data.token);
         navigate('/dashboard');
       } else {
-        const errJson = await res.json().catch(() => null);
-        setError(errJson?.error || errJson?.message || 'Invalid email or password. Please try again.');
+        const friendlyMsg = await extractApiErrorMessage(res, 'Invalid email or password. Please try again.');
+        setError(friendlyMsg);
       }
-    } catch {
-      setError('Unable to reach server. Please check your connection.');
+    } catch (err) {
+      setError(getFriendlyErrorMessage(err, 'Unable to connect to the server. Please check your internet connection.'));
     } finally {
       setLoading(false);
     }

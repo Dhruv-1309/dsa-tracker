@@ -27,6 +27,7 @@ import InsightsIcon from '@mui/icons-material/Insights';
 import { TextEffect } from '../components/motion/TextEffect';
 import GoogleSignInButton from '../components/GoogleSignInButton';
 import { API_BASE_URL } from '../api/config';
+import { extractApiErrorMessage, getFriendlyErrorMessage } from '../utils/errorUtils';
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -58,18 +59,11 @@ export default function Register() {
       if (res.ok) {
         navigate('/login');
       } else {
-        const text = await res.text();
-        let message = '';
-        try {
-          const json = JSON.parse(text);
-          message = json.error || json.message;
-        } catch {
-          message = text;
-        }
-        setError(message || 'Registration failed. This email may already be registered.');
+        const friendlyMsg = await extractApiErrorMessage(res, 'Registration could not be completed. This email may already be registered.');
+        setError(friendlyMsg);
       }
-    } catch {
-      setError('Unable to reach server. Please check your connection.');
+    } catch (err) {
+      setError(getFriendlyErrorMessage(err, 'Unable to connect to the server. Please check your internet connection.'));
     } finally {
       setLoading(false);
     }
