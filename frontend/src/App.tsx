@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { Analytics } from '@vercel/analytics/react';
 
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -76,6 +77,7 @@ function App() {
           </BrowserRouter>
         </AuthProvider>
       </QueryClientProvider>
+      <Analytics />
     </ThemeProvider>
   );
 }
